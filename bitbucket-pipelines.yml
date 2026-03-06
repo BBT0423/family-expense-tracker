@@ -1,0 +1,156 @@
+
+image: node:20-alpine
+
+options:
+  max-time: 15
+
+clone:
+  depth: full
+
+definitions:
+  caches:
+    npm: node_modules
+    dotnet: ~/.nuget/packages
+    sonar: ~/.sonar/cache
+
+  services:
+    docker:
+      memory: 4096
+
+  steps:
+    - step: &validate-branch
+        name: Validate Branch Name
+        image: alpine:latest
+        script:
+          - |
+            BRANCH="${BITBUCKET_BRANCH}"
+            if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "develop" ]; then exit 0; fi
+            echo "$BRANCH" | grep -E '^(feature|bugfix|hotfix|release)/[A-Z]+-[0-9]+-[a-z0-9-]+$' > /dev/null
+            if [ $? -ne 0 ]; then
+              echo "❌ Invalid branch: $BRANCH"
+              exit 1
+            fi
+            echo "✓ Valid: $BRANCH"
+
+    - step: &validate-pr-title
+        name: Validate PR Title
+        image: alpine:latest
+        script:
+            - |
+              PR_TITLE="${BITBUCKET_PR_TITLE:-}"
+              if [ -z "$PR_TITLE" ]; then exit 0; fi
+              echo "$PR_TITLE" | grep -E '^\[[A-Z]+-[0-9]+\]\ -\ ' > /dev/null
+              if [ $? -ne 0 ]; then
+                echo "❌ Invalid PR title: $PR_TITLE"
+                echo "Use: [ABC-123] - Description"
+                exit 1
+              fi
+              echo "✓ Valid PR title"
+
+    - step: &lint-test
+        name: Lint & Test
+        caches:
+          - npm
+        script:
+          - cd Stackapp.Web
+          - npm install --prefer-offline --no-audit
+          - npm run lint:check
+          - npm run format:check
+
+    - step: &test-with-coverage
+        name: Test with Coverage
+        image: mcr.microsoft.com/dotnet/sdk:10.0
+        caches:
+          - dotnet
+        script:
+          - dotnet test ./\SummaryYearSalary.Tests/\SummaryYearSalary.Tests.csproj --no-build --no-restore --configuration Release --logger "trx;LogFileName=test-results.trx" /p:CollectCoverage=true /p:CoverageFormat=opencover /p:CoverletOutputFormat=opencover /p:CoverletOutput=./coverage/coverage.xml
+        artifacts:
+          - '**/*.trx'
+          - '**/coverage/coverage.xml'
+
+    - step: &code-quality-scan
+        name: Analyze on SonarQube
+        size: 2x
+        image: mcr.microsoft.com/dotnet/sdk:10.0
+        caches:
+          - dotnet
+          - sonar
+          - npm
+        script:
+          # Install Node.js for JS/TS/Vue analysis
+          - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          - apt-get install -y nodejs
+          # Install frontend deps for TS type resolution
+          - cd Stackapp.Web && npm install --prefer-offline --no-audit && cd ..
+          # SonarScanner for .NET (covers C# + JS/TS/Vue via begin/end wrapper)
+          - dotnet tool install --global dotnet-sonarscanner
+          - export PATH="$PATH:/root/.dotnet/tools"
+          - dotnet sonarscanner begin
+            /k:"{{SONAR_PROJECT_KEY}}"
+            /n:"{{SONAR_PROJECT_NAME}}"
+            /v:"1.0.0"
+            /d:sonar.host.url="https://sonar.innofinite.dev"
+            /d:sonar.token="$SONAR_TOKEN"
+            /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml"
+            /d:sonar.qualitygate.wait=true
+            /d:sonar.qualitygate.timeout=300
+            /d:sonar.javascript.node.maxspace=2048
+            "/d:sonar.exclusions=**/node_modules/**,**/bin/**,**/obj/**,**/Migrations/**,**/*.min.js,**/*.Designer.cs,**/dist/**,**/coverage/**,**/wwwroot/**,**/public/**,**/*.generated.cs,**/Templates/**,**/Fonts/**,**/*.csproj,**/project.assets.json,**/*.csproj.nuget.*,**/*.md,**/index.html,**/*config*.js,**/*config*.ts,**/package*.json,**/*.yml,**/update-version.js,Directory.*.props,**/*.css,**/*.scss,**/*.svg,**/*.png,**/*.jpg,**/*.ico"
+            "/d:sonar.test.exclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx"
+            "/d:sonar.coverage.inclusions=Stackapp.Api/**,Stackapp.Application/**,Stackapp.Domain/**,Stackapp.Infrastructure/**"
+          - dotnet build --configuration Release --no-incremental
+          - dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+    - step: &build-frontend
+        name: Build Frontend
+        caches:
+          - npm
+        script:
+          - cd Stackapp.Web
+          - npm install --prefer-offline --no-audit
+          - npm run build
+        artifacts:
+          - Stackapp.Web/dist/**
+
+    - step: &build-backend
+        name: Build Backend
+        image: mcr.microsoft.com/dotnet/sdk:10.0
+        caches:
+          - dotnet
+        script:
+          - dotnet restore
+          - dotnet build --configuration Release --verbosity minimal --no-restore
+        artifacts:
+          - '**/bin/Release/**'
+
+pipelines:
+  default:
+    - step: *validate-branch
+
+  branches:
+    develop:
+      - parallel:
+          - step: *lint-test
+          - step: *test-with-coverage
+      - parallel:
+          - step: *build-frontend
+          - step: *build-backend
+    main:
+      - parallel:
+          - step: *lint-test
+          - step: *test-with-coverage
+      - step: *code-quality-scan
+      - parallel:
+          - step: *build-frontend
+          - step: *build-backend
+
+  pull-requests:
+    "**":
+      - parallel:
+          - step: *validate-pr-title
+          - step: *lint-test
+          - step: *test-with-coverage
+      - step: *code-quality-scan
+      - parallel:
+          - step: *build-frontend
+          - step: *build-backend

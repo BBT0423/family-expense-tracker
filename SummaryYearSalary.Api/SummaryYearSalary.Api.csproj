@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+	<ItemGroup>
+		<ProjectReference Include="..\SummaryYearSalary.Application\SummaryYearSalary.Application.csproj" />
+		<ProjectReference Include="..\SummaryYearSalary.Infrastructure\SummaryYearSalary.Infrastructure.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+		<PackageReference Include="QuestPDF" />
+		<PackageReference Include="Serilog.AspNetCore" />
+		<PackageReference Include="Swashbuckle.AspNetCore" />
+		<PackageReference Include="Mapster" />
+		<PackageReference Include="Mapster.DependencyInjection" />
+	</ItemGroup>
+</Project>

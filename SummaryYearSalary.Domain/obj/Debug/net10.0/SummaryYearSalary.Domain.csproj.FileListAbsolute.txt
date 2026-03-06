@@ -1,0 +1,14 @@
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\bin\Debug\net10.0\SummaryYearSalary.Domain.deps.json
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\bin\Debug\net10.0\SummaryYearSalary.Domain.dll
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\bin\Debug\net10.0\SummaryYearSalary.Domain.pdb
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\bin\Debug\net10.0\SummaryYearSalary.Domain.xml
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.csproj.AssemblyReference.cache
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.AssemblyInfoInputs.cache
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.AssemblyInfo.cs
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.csproj.CoreCompileInputs.cache
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.dll
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\refint\SummaryYearSalary.Domain.dll
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.xml
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\SummaryYearSalary.Domain.pdb
+C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Domain\obj\Debug\net10.0\ref\SummaryYearSalary.Domain.dll

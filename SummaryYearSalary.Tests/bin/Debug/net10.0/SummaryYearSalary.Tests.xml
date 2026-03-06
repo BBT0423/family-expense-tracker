@@ -1,0 +1,272 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SummaryYearSalary.Tests</name>
+    </assembly>
+    <members>
+        <member name="T:SummaryYearSalary.Tests.Builders.LoginRequestBuilder">
+            <summary>
+            Builder for creating LoginRequest test data with fluent API.
+            Simplifies test setup and makes tests more readable.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Builders.LoginRequestBuilder.WithEmail(System.String)">
+            <summary>
+            Set the email for the login request.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Builders.LoginRequestBuilder.WithPassword(System.String)">
+            <summary>
+            Set the password for the login request.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Builders.LoginRequestBuilder.Build">
+            <summary>
+            Build and return the LoginRequest.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Builders.RefreshTokenRequestBuilder">
+            <summary>
+            Builder for creating RefreshTokenRequest test data.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Builders.ForgotPasswordRequestBuilder">
+            <summary>
+            Builder for creating ForgotPasswordRequest test data.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Builders.ResetPasswordRequestBuilder">
+            <summary>
+            Builder for creating ResetPasswordRequest test data.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Builders.VerifyMfaRequestBuilder">
+            <summary>
+            Builder for creating VerifyMfaRequest test data.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Builders.ChangePasswordRequestBuilder">
+            <summary>
+            Builder for creating ChangePasswordRequest test data.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests">
+            <summary>
+            Endpoint behavior tests for the AuthorizeController.
+            Tests authentication endpoints: login, refresh token, MFA verification, password reset.
+            NOTE: These are model validation tests. For full integration testing, 
+            run against a live server instance or use TestServer configuration.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.LoginEndpoint_IsHTTPPost">
+            <summary>
+            Test that demonstrates the expected test structure.
+            Verify login endpoint exists and can be called.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.LoginRequest_RequiresNonEmptyEmail">
+            <summary>
+            Test login request validation - empty email.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.LoginRequest_RequiresNonEmptyPassword">
+            <summary>
+            Test login request validation - empty password.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.RefreshTokenRequest_CanBeCreated">
+            <summary>
+            Test refresh token request can be created.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.ForgotPasswordRequest_RequiresEmail">
+            <summary>
+            Test forgot password request validation.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.ResetPasswordRequest_RequiresValidData">
+            <summary>
+            Test reset password with valid token and new password.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.AuthorizeControllerTests.VerifyMfaRequest_CanBeCreated">
+            <summary>
+            Test MFA verification request validation.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Controllers.UserControllerTests">
+            <summary>
+            Endpoint behavior tests for the UserController.
+            Tests user endpoint models: enable MFA, change password.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.UserControllerTests.EnableMfa_EndpointCanBeReferenced">
+            <summary>
+            Test that enable MFA endpoint model exists and can be referenced.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.UserControllerTests.ChangePasswordRequest_CanBeCreatedWithValidData">
+            <summary>
+            Test change password request can be created with valid data.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.UserControllerTests.ChangePasswordRequest_AllowsMismatchedConfirmPassword">
+            <summary>
+            Test change password with mismatched new and confirm passwords.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.UserControllerTests.ChangePasswordRequest_AllowsEmptyUserId">
+            <summary>
+            Test change password with empty user ID.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.UserControllerTests.ChangePasswordEndpoint_RequiresAuthorization">
+            <summary>
+            Test change password endpoint requires authorization.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Controllers.UserControllerTests.ChangePasswordRequest_CanBeSerializedToJson">
+            <summary>
+            Test ChangePasswordRequest can be serialized to JSON.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Fixtures.BaseTest">
+            <summary>
+            Base class for test classes providing common functionality.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Fixtures.BaseTest.AssertNotNullOrEmpty(System.String,System.String)">
+            <summary>
+            Asserts that a string is not null or empty.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Fixtures.BaseTest.AssertNullOrEmpty(System.String,System.String)">
+            <summary>
+            Asserts that a string is null or empty.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Fixtures.BaseTest.AssertNotEmpty``1(System.Collections.Generic.IEnumerable{``0},System.String)">
+            <summary>
+            Asserts that a collection is not empty.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Fixtures.ApiTestCollection">
+            <summary>
+            Fixture collection for grouping related tests.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Fixtures.TestFixture">
+            <summary>
+            Reusable test fixture for API tests.
+            Can include shared resources like database connections, mocks, etc.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Helpers.TestHelpers">
+            <summary>
+            Utility methods for testing.
+            Provides common test operations like serialization, assertions, etc.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.ToJson``1(``0)">
+            <summary>
+            Serialize an object to JSON string.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.FromJson``1(System.String)">
+            <summary>
+            Deserialize JSON string to object.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.JsonContains(System.String,System.String)">
+            <summary>
+            Check if JSON string contains a value.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.GenerateRandomEmail">
+            <summary>
+            Generate a random email address for testing.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.GenerateRandomUserId">
+            <summary>
+            Generate a random user ID for testing.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.GenerateRandomToken">
+            <summary>
+            Generate a random refresh token for testing.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Helpers.TestHelpers.GenerateValidMfaCode">
+            <summary>
+            Generate a valid 6-digit MFA code.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Helpers.TestData">
+            <summary>
+            Test data constants.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Helpers.TestEndpoints">
+            <summary>
+            Test constants for routes and endpoints.
+            </summary>
+        </member>
+        <member name="T:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests">
+            <summary>
+            Model validation tests for API request objects.
+            Tests ensure that request models can be properly instantiated and serialized.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.LoginRequest_CanBeCreatedWithValidData">
+            <summary>
+            Test LoginRequest can be created with valid email and password.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.LoginRequest_CanBeSerializedToJson">
+            <summary>
+            Test LoginRequest serialization to JSON.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.RefreshTokenRequest_CanBeCreatedWithValidToken">
+            <summary>
+            Test RefreshTokenRequest can be created with valid refresh token.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.ForgotPasswordRequest_CanBeCreatedWithValidEmail">
+            <summary>
+            Test ForgotPasswordRequest can be created with valid email.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.ResetPasswordRequest_CanBeCreatedWithValidData">
+            <summary>
+            Test ResetPasswordRequest can be created with valid data.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.ResetPasswordRequest_CanBeSerializedToJson">
+            <summary>
+            Test ResetPasswordRequest serialization to JSON.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.VerifyMfaRequest_CanBeCreatedWithValidData">
+            <summary>
+            Test VerifyMfaRequest can be created with valid user ID and MFA code.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.VerifyMfaRequest_AcceptsValidCodeFormat">
+            <summary>
+            Test VerifyMfaRequest validates 6-digit MFA code format.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.ChangePasswordRequest_CanBeCreatedWithValidData">
+            <summary>
+            Test ChangePasswordRequest can be created with valid data.
+            </summary>
+        </member>
+        <member name="M:SummaryYearSalary.Tests.Models.AuthorizeModelValidationTests.ChangePasswordRequest_CanBeSerializedToJson">
+            <summary>
+            Test ChangePasswordRequest serialization to JSON.
+            </summary>
+        </member>
+    </members>
+</doc>

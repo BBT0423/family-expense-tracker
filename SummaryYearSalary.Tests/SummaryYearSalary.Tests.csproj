@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SummaryYearSalary.Api\SummaryYearSalary.Api.csproj" />
+    <ProjectReference Include="..\SummaryYearSalary.Application\SummaryYearSalary.Application.csproj" />
+    <ProjectReference Include="..\SummaryYearSalary.Domain\SummaryYearSalary.Domain.csproj" />
+    <ProjectReference Include="..\SummaryYearSalary.Infrastructure\SummaryYearSalary.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
