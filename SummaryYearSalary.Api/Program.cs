@@ -99,6 +99,11 @@ public static partial class Program
         }))
         .AllowAnonymous();
 
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous();
+        }
+
         Log.Information("Starting Secure API application");
         await app.RunAsync();
 
@@ -145,7 +150,10 @@ public static partial class Program
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
 
             // Custom security middleware
             app.UseSecurityHeaders();              // OWASP #8: Security headers
