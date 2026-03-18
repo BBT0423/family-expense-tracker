@@ -1,0 +1,89 @@
+# ============================================================
+# .NET / C# Build Artifacts
+# ============================================================
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.ncrunchproject
+*.ncrunchsolution
+*.ReSharper
+_ReSharper*/
+
+# NuGet
+*.nupkg
+*.snupkg
+!**/[Pp]ackages/build/
+.nuget/
+packages/
+nuget.config
+
+# MSBuild crash logs
+MSBuild_*.failure.log
+
+# Published output
+publish/
+PublishProfiles/
+
+# ============================================================
+# ASP.NET Core
+# ============================================================
+Public/Logs/
+Public/uploads/
+*.pfx
+*.key
+
+# ============================================================
+# Vue / Vite / Node.js Frontend
+# ============================================================
+SummaryYearSalary.Web/node_modules/
+SummaryYearSalary.Web/dist/
+SummaryYearSalary.Web/.vite/
+SummaryYearSalary.Web/.output/
+SummaryYearSalary.Web/coverage/
+
+# Environment files (keep base .env, ignore local overrides)
+SummaryYearSalary.Web/.env.local
+SummaryYearSalary.Web/.env.*.local
+
+# ============================================================
+# IDE / Editors
+# ============================================================
+# Visual Studio Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# JetBrains (Rider)
+.idea/
+*.iml
+
+# ============================================================
+# OS
+# ============================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================================
+# Test Results
+# ============================================================
+TestResults/
+*.coverage
+*.coveragexml
+*.opencover.xml
+[Tt]est[Rr]esult*/
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+logs/
