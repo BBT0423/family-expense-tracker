@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Wo5nrkMklt8=",
+  "dgSpecHash": "GDpmKDKLOjM=",
   "success": true,
-  "projectFilePath": "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Domain\\SummaryYearSalary.Domain.csproj",
+  "projectFilePath": "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Domain\\SummaryYearSalary.Domain.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\pongp\\.nuget\\packages\\microsoft.aspnetcore.cryptography.internal\\10.0.2\\microsoft.aspnetcore.cryptography.internal.10.0.2.nupkg.sha512",
     "C:\\Users\\pongp\\.nuget\\packages\\microsoft.aspnetcore.cryptography.keyderivation\\10.0.2\\microsoft.aspnetcore.cryptography.keyderivation.10.0.2.nupkg.sha512",

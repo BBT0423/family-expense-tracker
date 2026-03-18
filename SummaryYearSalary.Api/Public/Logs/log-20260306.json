@@ -354,3 +354,58 @@ System.ArgumentException: Keyword not supported: '{inno_db_connection};database'
    at SummaryYearSalary.Api.Middlewares.AuditLoggingMiddleware.InvokeAsync(HttpContext context, IAuditLogRepository auditLogRepository) in C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Api\Middlewares\AuditLoggingMiddleware.cs:line 37
    at SummaryYearSalary.Api.Middlewares.RequestValidationMiddleware.InvokeAsync(HttpContext context) in C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Api\Middlewares\RequestValidationMiddleware.cs:line 54
    at SummaryYearSalary.Api.Middlewares.ExceptionHandlingMiddleware.InvokeAsync(HttpContext context) in C:\Users\pongp\SummaryYearSalary\SummaryYearSalary.Api\Middlewares\ExceptionHandlingMiddleware.cs:line 25
+2026-03-06 20:40:49.910 +07:00 [Information] User profile is available. Using '"C:\Users\pongp\AppData\Local\ASP.NET\DataProtection-Keys"' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-06 20:40:50.307 +07:00 [Warning] No instantiatable types implementing `IEntityTypeConfiguration` were found while scanning assembly '"SummaryYearSalary.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"'.
+2026-03-06 20:40:50.886 +07:00 [Information] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-03-06 20:40:50.954 +07:00 [Information] Applying migration '"20260123025442_InitialCreate"'.
+2026-03-06 20:40:51.281 +07:00 [Information] Created role: "Admin"
+2026-03-06 20:40:51.289 +07:00 [Information] Created role: "User"
+2026-03-06 20:40:51.486 +07:00 [Information] Created admin user: "admin@innofinite.dev"
+2026-03-06 20:40:51.488 +07:00 [Information] Database initialized successfully
+2026-03-06 20:40:51.632 +07:00 [Information] Starting Secure API application
+2026-03-06 20:40:51.645 +07:00 [Information] Creating key {16dcf4cc-91b3-4f40-9064-df23148a10bc} with creation date 2026-03-06 13:40:51Z, activation date 2026-03-06 13:40:51Z, and expiration date 2026-06-04 13:40:51Z.
+2026-03-06 20:40:51.656 +07:00 [Information] Writing data to file '"C:\Users\pongp\AppData\Local\ASP.NET\DataProtection-Keys\key-16dcf4cc-91b3-4f40-9064-df23148a10bc.xml"'.
+2026-03-06 20:40:51.673 +07:00 [Information] Email Recovery Background Service is starting.
+2026-03-06 20:40:51.824 +07:00 [Information] Now listening on: "https://localhost:5001"
+2026-03-06 20:40:51.825 +07:00 [Information] Now listening on: "http://localhost:5000"
+2026-03-06 20:40:51.914 +07:00 [Information] Application started. Press Ctrl+C to shut down.
+2026-03-06 20:40:51.915 +07:00 [Information] Hosting environment: "Development"
+2026-03-06 20:40:51.916 +07:00 [Information] Content root path: "E:\Project_visual\Family-expense-tracker\SummaryYearSalary.Api"
+2026-03-06 20:45:40.493 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:45:40.497 +07:00 [Information] Request "OPTIONS" "/api/authorize/login" completed in 8.5242ms with status 204
+2026-03-06 20:45:40.544 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:45:41.297 +07:00 [Information] Validation error: [("Email": ["A valid email address is required."])]
+2026-03-06 20:45:41.304 +07:00 [Information] Login failed for "Admin" from "::1"
+2026-03-06 20:45:41.343 +07:00 [Information] Request "POST" "/api/authorize/login" completed in 799.5652ms with status 400
+2026-03-06 20:45:52.027 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:45:52.029 +07:00 [Information] Request "OPTIONS" "/api/authorize/login" completed in 1.449ms with status 204
+2026-03-06 20:45:52.032 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:45:52.113 +07:00 [Information] User "admin@innofinite.dev" logged in successfully from "::1". MFA enabled: True
+2026-03-06 20:45:52.128 +07:00 [Information] Request "POST" "/api/authorize/login" completed in 95.909ms with status 200
+2026-03-06 20:47:30.534 +07:00 [Information] User profile is available. Using '"C:\Users\pongp\AppData\Local\ASP.NET\DataProtection-Keys"' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-03-06 20:47:30.796 +07:00 [Warning] No instantiatable types implementing `IEntityTypeConfiguration` were found while scanning assembly '"SummaryYearSalary.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"'.
+2026-03-06 20:47:31.125 +07:00 [Information] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-03-06 20:47:31.202 +07:00 [Information] No migrations were applied. The database is already up to date.
+2026-03-06 20:47:31.434 +07:00 [Information] Database initialized successfully
+2026-03-06 20:47:31.492 +07:00 [Information] Starting Secure API application
+2026-03-06 20:47:31.510 +07:00 [Information] Email Recovery Background Service is starting.
+2026-03-06 20:47:31.623 +07:00 [Information] Now listening on: "https://localhost:5001"
+2026-03-06 20:47:31.624 +07:00 [Information] Now listening on: "http://localhost:5000"
+2026-03-06 20:47:31.707 +07:00 [Information] Application started. Press Ctrl+C to shut down.
+2026-03-06 20:47:31.708 +07:00 [Information] Hosting environment: "Development"
+2026-03-06 20:47:31.709 +07:00 [Information] Content root path: "E:\Project_visual\Family-expense-tracker\SummaryYearSalary.Api"
+2026-03-06 20:52:01.421 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:52:01.426 +07:00 [Information] Request "OPTIONS" "/api/authorize/login" completed in 7.7166ms with status 204
+2026-03-06 20:52:01.473 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:52:31.603 +07:00 [Information] User "admin@innofinite.dev" logged in successfully from "::1". MFA enabled: True
+2026-03-06 20:52:44.020 +07:00 [Information] Request "POST" "/api/authorize/login" completed in 42547.8226ms with status 200
+2026-03-06 20:54:34.529 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:54:34.530 +07:00 [Information] Request "OPTIONS" "/api/authorize/login" completed in 1.6391ms with status 204
+2026-03-06 20:54:34.534 +07:00 [Information] CORS policy execution successful.
+2026-03-06 20:55:10.518 +07:00 [Information] User "admin@innofinite.dev" logged in successfully from "::1". MFA enabled: True
+2026-03-06 20:55:10.523 +07:00 [Information] Request "POST" "/api/authorize/login" completed in 35989.4552ms with status 200
+2026-03-06 21:01:09.863 +07:00 [Information] CORS policy execution successful.
+2026-03-06 21:01:09.864 +07:00 [Information] Request "OPTIONS" "/api/authorize/login" completed in 0.9909ms with status 204
+2026-03-06 21:01:09.868 +07:00 [Information] CORS policy execution successful.
+2026-03-06 21:01:13.114 +07:00 [Information] User "admin@innofinite.dev" logged in successfully from "::1". MFA enabled: False
+2026-03-06 21:01:13.118 +07:00 [Information] Request "POST" "/api/authorize/login" completed in 3250.6433ms with status 200
