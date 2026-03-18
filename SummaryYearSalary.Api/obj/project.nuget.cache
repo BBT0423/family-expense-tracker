@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "iumAUcXkybE=",
+  "dgSpecHash": "6SQKXYBVj+g=",
   "success": true,
-  "projectFilePath": "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Api\\SummaryYearSalary.Api.csproj",
+  "projectFilePath": "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Api\\SummaryYearSalary.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\pongp\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
     "C:\\Users\\pongp\\.nuget\\packages\\azure.identity\\1.14.2\\azure.identity.1.14.2.nupkg.sha512",

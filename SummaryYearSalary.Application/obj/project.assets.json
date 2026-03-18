@@ -1226,22 +1226,20 @@
   },
   "packageFolders": {
     "C:\\Users\\pongp\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
-    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Application\\SummaryYearSalary.Application.csproj",
+      "projectUniqueName": "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Application\\SummaryYearSalary.Application.csproj",
       "projectName": "SummaryYearSalary.Application",
-      "projectPath": "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Application\\SummaryYearSalary.Application.csproj",
+      "projectPath": "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Application\\SummaryYearSalary.Application.csproj",
       "packagesPath": "C:\\Users\\pongp\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Application\\obj\\",
+      "outputPath": "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Application\\obj\\",
       "projectStyle": "PackageReference",
       "centralPackageVersionsManagementEnabled": true,
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
         "C:\\Users\\pongp\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -1253,14 +1251,15 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Domain\\SummaryYearSalary.Domain.csproj": {
-              "projectPath": "C:\\Users\\pongp\\SummaryYearSalary\\SummaryYearSalary.Domain\\SummaryYearSalary.Domain.csproj"
+            "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Domain\\SummaryYearSalary.Domain.csproj": {
+              "projectPath": "E:\\Project_visual\\Family-expense-tracker\\SummaryYearSalary.Domain\\SummaryYearSalary.Domain.csproj"
             }
           }
         }
