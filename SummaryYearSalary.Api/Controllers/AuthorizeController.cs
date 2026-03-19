@@ -308,7 +308,12 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
         var token = Uri.EscapeDataString(result.Value!.Token);
         var refreshToken = Uri.EscapeDataString(result.Value.RefreshToken);
         var userId = Uri.EscapeDataString(result.Value.User.Id);
-        return Redirect($"{_googleSettings.CallbackUrl}?token={token}&refreshToken={refreshToken}&userId={userId}");
+        var userName = Uri.EscapeDataString(result.Value.User.Name ?? string.Empty);
+        var userEmail = Uri.EscapeDataString(result.Value.User.Email ?? string.Empty);
+        var userAvatar = Uri.EscapeDataString(result.Value.User.Avatar ?? string.Empty);
+        var metadataJson = System.Text.Json.JsonSerializer.Serialize(result.Value.User.Metadata);
+        var metadata = Uri.EscapeDataString(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(metadataJson)));
+        return Redirect($"{_googleSettings.CallbackUrl}?token={token}&refreshToken={refreshToken}&userId={userId}&name={userName}&email={userEmail}&avatar={userAvatar}&metadata={metadata}");
     }
 
 }

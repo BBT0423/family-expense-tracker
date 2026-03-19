@@ -228,6 +228,7 @@ public static class InfrastructureServiceRegistration
                     options.ClientId = googleClientId;
                     options.ClientSecret = googleClientSecret;
                     options.CallbackPath = "/api/authorize/google/callback-internal";
+                    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.Scope.Add("profile");
                     options.Scope.Add("email");
                 });

@@ -3,8 +3,10 @@ import type {
   LoginRequest,
   LoginResponse,
   RefreshTokenRequest,
+  SendPhoneOtpRequest,
   VerifyMfaRequest,
   VerifyMfaResponse,
+  VerifyPhoneOtpRequest,
 } from '@/types/authorize';
 import type { Result } from '@/types';
 
@@ -47,5 +49,21 @@ export const authService = {
    */
   async resetPassword(payload: { email: string; token: string; newPassword: string }) {
     return httpClient.post<Result<void>>('/api/authorize/reset-password', payload);
+  },
+
+  /**
+   * POST /api/authorize/phone/send-otp
+   * Send OTP to email linked with the phone number
+   */
+  async sendPhoneOtp(payload: SendPhoneOtpRequest) {
+    return httpClient.post<Result<void>>('/api/authorize/phone/send-otp', payload);
+  },
+
+  /**
+   * POST /api/authorize/phone/verify-otp
+   * Verify OTP and complete phone login
+   */
+  async verifyPhoneOtp(payload: VerifyPhoneOtpRequest) {
+    return httpClient.post<Result<LoginResponse>>('/api/authorize/phone/verify-otp', payload);
   },
 };

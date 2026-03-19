@@ -33,7 +33,7 @@ class HttpClient {
 
   constructor() {
     this.cacheTTL = Number(import.meta.env.VITE_CACHE_TTL) || 900000; // 15 minutes
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5001';
+    this.baseURL = '';
     this.timeout = 60000;
 
     this.client = this.createAxiosInstance();

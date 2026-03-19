@@ -18,7 +18,6 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { SecureStorage } from '@/utils/storage';
 import { STORAGE_APP_LOCKED, STORAGE_LAST_ACTIVITY } from '@/constants/storage';
-import { httpClient } from '@/utils/httpClient';
 
 const router = useRouter();
 const route = useRoute();
@@ -42,43 +41,41 @@ onMounted(async () => {
     return;
   }
 
-  try {
-    const { data } = await httpClient.get('/api/user/me', {
-      headers: { Authorization: `Bearer ${decodeURIComponent(tokenParam)}` },
-    });
-
-    if (data?.isSuccess && data?.value) {
-      authStore.setAuth({
-        token: decodeURIComponent(tokenParam),
-        refreshToken: decodeURIComponent(refreshTokenParam),
-        expiresIn: data.value.expiresIn ?? 120,
-        isMfaEnabled: false,
-        user: data.value,
-      });
-    } else {
-      authStore.setAuth({
-        token: decodeURIComponent(tokenParam),
-        refreshToken: decodeURIComponent(refreshTokenParam),
-        expiresIn: 120,
-        isMfaEnabled: false,
-        user: { id: route.query.userId as string ?? '', email: '', name: '', avatar: '', metadata: {} },
-      });
+  let metadata: Record<string, any> = {};
+  const metadataParam = route.query.metadata as string | undefined;
+  if (metadataParam) {
+    try {
+      metadata = JSON.parse(atob(decodeURIComponent(metadataParam)));
+    } catch {
+      // ignore malformed metadata
     }
-
-    SecureStorage.removeItem(STORAGE_APP_LOCKED);
-    localStorage.removeItem(STORAGE_LAST_ACTIVITY);
-
-    const redirectUrl = sessionStorage.getItem('REDIRECT_URL');
-    if (redirectUrl) {
-      sessionStorage.removeItem('REDIRECT_URL');
-      await router.push(redirectUrl);
-    } else {
-      await router.push('/pages');
-    }
-    globalThis.location.reload();
-  } catch {
-    error.value = 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่';
   }
+
+  authStore.setAuth({
+    token: decodeURIComponent(tokenParam),
+    refreshToken: decodeURIComponent(refreshTokenParam),
+    expiresIn: 120,
+    isMfaEnabled: false,
+    user: {
+      id: route.query.userId ? decodeURIComponent(route.query.userId as string) : '',
+      email: route.query.email ? decodeURIComponent(route.query.email as string) : '',
+      name: route.query.name ? decodeURIComponent(route.query.name as string) : '',
+      avatar: route.query.avatar ? decodeURIComponent(route.query.avatar as string) : '',
+      metadata,
+    },
+  });
+
+  SecureStorage.removeItem(STORAGE_APP_LOCKED);
+  localStorage.removeItem(STORAGE_LAST_ACTIVITY);
+
+  const redirectUrl = sessionStorage.getItem('REDIRECT_URL');
+  if (redirectUrl) {
+    sessionStorage.removeItem('REDIRECT_URL');
+    await router.push(redirectUrl);
+  } else {
+    await router.push('/pages');
+  }
+  globalThis.location.reload();
 });
 </script>
 
@@ -123,6 +120,8 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

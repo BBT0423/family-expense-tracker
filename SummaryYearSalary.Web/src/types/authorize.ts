@@ -51,3 +51,12 @@ export interface RefreshTokenRequest {
   refreshToken: string;
   userId: string;
 }
+
+export interface SendPhoneOtpRequest {
+  phoneNumber: string;
+}
+
+export interface VerifyPhoneOtpRequest {
+  phoneNumber: string;
+  otpCode: string;
+}

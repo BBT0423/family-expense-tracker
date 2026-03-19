@@ -29,16 +29,10 @@ public class AuditLoggingMiddleware(RequestDelegate next, ILogger<AuditLoggingMi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in request pipeline for {Method} {Path}", 
-                context.Request.Method, 
-                context.Request.Path);
-            
-            // Log failed request
+            // Log failed request for audit trail; exception logging is handled by ExceptionHandlingMiddleware
             await LogRequestAsync(context, auditLogRepository, false, ex.Message);
-            
-            throw new InvalidOperationException(
-                $"An error occurred while processing request {context.Request.Method} {context.Request.Path}", 
-                ex);
+
+            throw;
         }
         finally
         {
