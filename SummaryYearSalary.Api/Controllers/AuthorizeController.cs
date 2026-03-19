@@ -4,33 +4,40 @@ using SummaryYearSalary.Application.Authorize.Commands.ForgotPasswordCommand;
 using SummaryYearSalary.Application.Authorize.Commands.LoginCommand;
 using SummaryYearSalary.Application.Authorize.Commands.RefreshTokenCommand;
 using SummaryYearSalary.Application.Authorize.Commands.ResetPasswordCommand;
+using SummaryYearSalary.Application.Authorize.Commands.SendPhoneOtpCommand;
+using SummaryYearSalary.Application.Authorize.Commands.VerifyPhoneOtpCommand;
 using SummaryYearSalary.Application.Authorize.Queries.VerifyMfaQuery;
 using SummaryYearSalary.Application.Interfaces;
+using SummaryYearSalary.Application.Interfaces.IServices;
+using SummaryYearSalary.Infrastructure.Common;
 
 using MapsterMapper;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace SummaryYearSalary.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger logger) : BaseController
+public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger logger, IAuthorizeService authorizeService, IOptions<GoogleAuthSettings> googleSettings) : BaseController
 {
     private readonly ISender _mediator = mediator;
     private readonly IMapper _mapper = mapper;
     private readonly IAppLogger _logger = logger;
+    private readonly IAuthorizeService _authorizeService = authorizeService;
+    private readonly GoogleAuthSettings _googleSettings = googleSettings.Value;
 
 
     /// <summary>
     /// Authenticate user and return JWT tokens.
-    /// Implements MFA support and account lockout (OWASP #2).
     /// </summary>
-    /// <param name="request">Login request containing email and password.</param>
-    /// <returns>JWT tokens if MFA disabled, or MFA challenge if enabled.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -50,7 +57,7 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
             return ToProblem(result, "Login Failed");
         }
 
-        _logger.LogDebug("User {Email} logged in successfully from {IpAddress}. MFA enabled: {MfaEnabled}", 
+        _logger.LogDebug("User {Email} logged in successfully from {IpAddress}. MFA enabled: {MfaEnabled}",
             request.Email, ipAddress, result.Value!.IsMfaEnabled);
 
         return Ok(result);
@@ -59,10 +66,7 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
 
     /// <summary>
     /// Refresh access token using refresh token.
-    /// Implements secure token rotation (OWASP #2).
     /// </summary>
-    /// <param name="request">Refresh token request containing the refresh token.</param>
-    /// <returns>New JWT access and refresh tokens upon successful validation.</returns>
     [HttpPost("refresh")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -89,11 +93,7 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
 
     /// <summary>
     /// Verify MFA code and complete authentication.
-    /// This endpoint is called after initial login when MFA is enabled.
-    /// Implements secure MFA verification (OWASP #2).
     /// </summary>
-    /// <param name="request">MFA verification request containing temporary token and OTP code.</param>
-    /// <returns>JWT access and refresh tokens upon successful MFA verification.</returns>
     [HttpPost("mfa/verify")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -122,8 +122,6 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
     /// <summary>
     /// Forgot password endpoint to initiate password reset process.
     /// </summary>
-    /// <param name="request">Forgot password request containing user email.</param>
-    /// <returns>Success message if the reset email was sent.</returns>
     [HttpPost("forgot-password")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -148,13 +146,11 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
         _logger.LogDebug("Forgot password succeeded for {Email} from {IpAddress}", request.Email, ipAddress);
         return Ok(result);
     }
-    
+
 
     /// <summary>
     /// Reset password endpoint to complete password reset process.
     /// </summary>
-    /// <param name="request">Reset password request containing reset token and new password.</param>
-    /// <returns>Success message if the password was reset.</returns>
     [HttpPost("reset-password")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -178,6 +174,141 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
 
         _logger.LogDebug("Reset password succeeded for {Email} from {IpAddress}", request.Email, ipAddress);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Register a new user account.
+    /// </summary>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
+        var result = await _authorizeService.RegisterAsync(request.Email, request.Password, request.FirstName, request.LastName, ipAddress);
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogDebug("Registration failed for {Email} from {IpAddress}", request.Email, ipAddress);
+            return ToProblem(result, "Registration Failed");
+        }
+
+        _logger.LogDebug("User {Email} registered successfully from {IpAddress}", request.Email, ipAddress);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Send OTP code to email linked with the given phone number.
+    /// </summary>
+    [HttpPost("phone/send-otp")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendPhoneOtp([FromBody] SendPhoneOtpRequest request)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
+        var template = await System.IO.File.ReadAllTextAsync(TemplateConstants.PhoneOtpTemplate);
+        var command = new SendPhoneOtpCommand(request.PhoneNumber, ipAddress, template);
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogDebug("Send phone OTP failed for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
+            return ToProblem(result, "Send OTP Failed");
+        }
+
+        _logger.LogDebug("Send phone OTP succeeded for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Verify phone OTP code and return JWT tokens.
+    /// </summary>
+    [HttpPost("phone/verify-otp")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyPhoneOtp([FromBody] VerifyPhoneOtpRequest request)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
+        var command = new VerifyPhoneOtpCommand(request.PhoneNumber, request.OtpCode, ipAddress);
+        var result = await _mediator.Send(command);
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogDebug("Phone OTP verification failed for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
+            return ToProblem(result, "OTP Verification Failed");
+        }
+
+        _logger.LogDebug("Phone OTP verification succeeded for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Initiate Google OAuth login - redirects to Google consent screen.
+    /// </summary>
+    [HttpGet("google")]
+    [AllowAnonymous]
+    public IActionResult GoogleLogin([FromQuery] string? returnUrl = null)
+    {
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(GoogleCallback), "Authorize"),
+            Items = { { "returnUrl", returnUrl ?? "/" } }
+        };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    /// <summary>
+    /// Google OAuth callback - exchanges code for user info and returns JWT.
+    /// </summary>
+    [HttpGet("google/callback")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleCallback()
+    {
+        var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        if (!authenticateResult.Succeeded)
+        {
+            _logger.LogDebug("Google authentication failed");
+            return Redirect($"{_googleSettings.CallbackUrl}?error=google_auth_failed");
+        }
+
+        var claims = authenticateResult.Principal?.Claims.ToList();
+        var email = claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+        var name = claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Name)?.Value ?? string.Empty;
+        var googleId = claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+        if (string.IsNullOrEmpty(email))
+        {
+            return Redirect($"{_googleSettings.CallbackUrl}?error=no_email");
+        }
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
+        var result = await _authorizeService.GoogleLoginAsync(email, name, googleId, ipAddress);
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogDebug("Google login failed for {Email}: {Error}", email, result.Error);
+            return Redirect($"{_googleSettings.CallbackUrl}?error={Uri.EscapeDataString(result.Error ?? "login_failed")}");
+        }
+
+        _logger.LogDebug("Google login succeeded for {Email} from {IpAddress}", email, ipAddress);
+
+        var token = Uri.EscapeDataString(result.Value!.Token);
+        var refreshToken = Uri.EscapeDataString(result.Value.RefreshToken);
+        var userId = Uri.EscapeDataString(result.Value.User.Id);
+        return Redirect($"{_googleSettings.CallbackUrl}?token={token}&refreshToken={refreshToken}&userId={userId}");
     }
 
 }

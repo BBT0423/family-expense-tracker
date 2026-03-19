@@ -32,6 +32,17 @@ public class SecuritySettings
 }
 
 /// <summary>
+/// Google OAuth configuration settings.
+/// </summary>
+public class GoogleAuthSettings
+{
+    public const string SectionName = "GoogleAuth";
+    public string ClientId { get; set; } = string.Empty;
+    public string ClientSecret { get; set; } = string.Empty;
+    public string CallbackUrl { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Rate limiting configuration.
 /// Addresses OWASP #4 - Unrestricted Resource Consumption.
 /// </summary>
