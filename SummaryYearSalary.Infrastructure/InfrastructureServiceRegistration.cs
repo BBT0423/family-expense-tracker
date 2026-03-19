@@ -12,6 +12,8 @@ using SummaryYearSalary.Infrastructure.Data;
 using SummaryYearSalary.Infrastructure.Repositories;
 using SummaryYearSalary.Infrastructure.Services;
 
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -84,12 +86,20 @@ public static class InfrastructureServiceRegistration
             options.EnableEmailNotifications = emailConfiguration.EnableEmailNotifications;
         });
 
-        // Configure consolidated settings for AuthorizeService
         services.Configure<AuthorizeServiceSettings>(options =>
         {
             options.Security = securitySettings;
             options.Jwt = jwtSettings;
             options.Email = emailConfiguration;
+        });
+
+        // Register Google Auth settings for DI
+        var googleConfig = configuration.GetSection(GoogleAuthSettings.SectionName).Get<GoogleAuthSettings>() ?? new GoogleAuthSettings();
+        services.Configure<GoogleAuthSettings>(options =>
+        {
+            options.ClientId = googleConfig.ClientId;
+            options.ClientSecret = googleConfig.ClientSecret;
+            options.CallbackUrl = googleConfig.CallbackUrl;
         });
 
         return emailConfiguration;
@@ -105,7 +115,6 @@ public static class InfrastructureServiceRegistration
             throw new InvalidOperationException("The connection string 'SummaryYearSalaryConnection' is missing or empty. The application cannot start without a valid database connection string.");
         }
 
-        // Replace environment variable placeholders using environment variables
         if (connectionString.Contains("{INNO_DB_CONNECTION}", StringComparison.Ordinal))
         {
             var innoDbConnection = Environment.GetEnvironmentVariable("INNO_DB_CONNECTION");
@@ -124,7 +133,6 @@ public static class InfrastructureServiceRegistration
                         maxRetryDelay: TimeSpan.FromSeconds(5),
                         errorNumbersToAdd: null));
 
-            // Enable sensitive data logging only in development
             if (configuration.GetValue<bool>("IsDevelopment"))
             {
                 options.EnableSensitiveDataLogging();
@@ -139,7 +147,6 @@ public static class InfrastructureServiceRegistration
     {
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
-            // Password settings
             options.Password.RequireDigit = true;
             options.Password.RequireLowercase = true;
             options.Password.RequireUppercase = true;
@@ -147,14 +154,12 @@ public static class InfrastructureServiceRegistration
             options.Password.RequiredLength = 8;
             options.Password.RequiredUniqueChars = 4;
 
-            // Lockout settings
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.AllowedForNewUsers = true;
 
-            // User settings
             options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = false; // Set to true in production
+            options.SignIn.RequireConfirmedEmail = false;
             options.SignIn.RequireConfirmedAccount = false;
         })
         .AddEntityFrameworkStores<SummaryYearSalaryDbContext>()
@@ -168,9 +173,15 @@ public static class InfrastructureServiceRegistration
         IConfiguration configuration)
     {
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
+        var googleSettings = configuration.GetSection(GoogleAuthSettings.SectionName).Get<GoogleAuthSettings>();
         var key = Encoding.UTF8.GetBytes(jwtSettings!.Secret);
 
-        services.AddAuthentication(options =>
+        var googleClientId = (googleSettings?.ClientId ?? string.Empty)
+            .Replace("{INNO_GOOGLE_CLIENT_ID}", Environment.GetEnvironmentVariable("INNO_GOOGLE_CLIENT_ID") ?? string.Empty, StringComparison.Ordinal);
+        var googleClientSecret = (googleSettings?.ClientSecret ?? string.Empty)
+            .Replace("{INNO_GOOGLE_CLIENT_SECRET}", Environment.GetEnvironmentVariable("INNO_GOOGLE_CLIENT_SECRET") ?? string.Empty, StringComparison.Ordinal);
+
+        var authBuilder = services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -179,7 +190,7 @@ public static class InfrastructureServiceRegistration
         .AddJwtBearer(options =>
         {
             options.SaveToken = true;
-            options.RequireHttpsMetadata = true; // Enforce HTTPS
+            options.RequireHttpsMetadata = false;
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -189,10 +200,9 @@ public static class InfrastructureServiceRegistration
                 ValidIssuer = jwtSettings.Issuer,
                 ValidAudience = jwtSettings.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
-                ClockSkew = TimeSpan.Zero // Reduce clock skew for tighter expiration
+                ClockSkew = TimeSpan.Zero
             };
 
-            // Configure events for logging
             options.Events = new JwtBearerEvents
             {
                 OnAuthenticationFailed = context =>
@@ -207,6 +217,21 @@ public static class InfrastructureServiceRegistration
                 }
             };
         });
+
+        // Add Google OAuth only if credentials are configured
+        if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+        {
+            authBuilder
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+                {
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleClientSecret;
+                    options.CallbackPath = "/api/authorize/google/callback-internal";
+                    options.Scope.Add("profile");
+                    options.Scope.Add("email");
+                });
+        }
 
         return services;
     }
@@ -298,16 +323,12 @@ public static class InfrastructureServiceRegistration
     private static IServiceCollection AddRepositories(
         this IServiceCollection services)
     {
-
-        // Generic repository and unit of work
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Logging and audit
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAppLogger, AppLogger>();
 
-        // Authorization and OTP services
         services.AddScoped<IAuthorizeService, AuthorizeService>();
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
