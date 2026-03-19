@@ -4,4 +4,5 @@ internal static class TemplateConstants
 {
     internal const string ResetPasswordTemplate = "Templates/ResetPassword.html";
     internal const string PasswordUpdateTemplate = "Templates/PasswordUpdate.html";
+    internal const string PhoneOtpTemplate = "Templates/PhoneOtp.html";
 }

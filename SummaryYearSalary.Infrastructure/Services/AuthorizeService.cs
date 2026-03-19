@@ -6,6 +6,8 @@ using SummaryYearSalary.Application.Authorize.Commands.ForgotPasswordCommand;
 using SummaryYearSalary.Application.Authorize.Commands.LoginCommand;
 using SummaryYearSalary.Application.Authorize.Commands.RefreshTokenCommand;
 using SummaryYearSalary.Application.Authorize.Commands.ResetPasswordCommand;
+using SummaryYearSalary.Application.Authorize.Commands.SendPhoneOtpCommand;
+using SummaryYearSalary.Application.Authorize.Commands.VerifyPhoneOtpCommand;
 using SummaryYearSalary.Application.Authorize.Queries.VerifyMfaQuery;
 using SummaryYearSalary.Application.Common;
 using SummaryYearSalary.Application.Interfaces;
@@ -18,6 +20,7 @@ using SummaryYearSalary.Domain.Entities;
 using SummaryYearSalary.Infrastructure.Common;
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace SummaryYearSalary.Infrastructure.Services;
@@ -85,7 +88,6 @@ public class AuthorizeService(
             return Result.Failure<EnableMfaResponse>("MFA is already enabled for this user.");
         }
 
-        // Generate MFA secret
         var mfaSecret = _otpService.GenerateSecret();
         var mfaAuthenticatorUrl = _otpService.GenerateQrCodeUri(user.Email ?? string.Empty, mfaSecret, _jwtSettings.Audience);
         user.MfaSecret = mfaSecret;
@@ -105,7 +107,7 @@ public class AuthorizeService(
         var body = new StringBuilder(request.Template);
         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
         var resetLink = $"{_emailSettings.Web}/authorize/reset-password?token={Uri.EscapeDataString(resetToken)}";
-        
+
         body.Replace("[Name]", user.FirstName);
         body.Replace("[ResetPasswordLink]", resetLink);
 
@@ -126,17 +128,14 @@ public class AuthorizeService(
             return Result.Unauthorized<AuthorizeResponse>("Invalid login attempt.");
         }
 
-        // Check if account is locked
         if (user.LockoutEndDate.HasValue && user.LockoutEndDate > DateTimeProvider.GetBangkokTimeZone())
         {
             return Result.Unauthorized<AuthorizeResponse>($"Account is locked until {user.LockoutEndDate}");
         }
 
-        // Verify password
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
         if (!result.Succeeded)
         {
-            // Increment failed login attempts
             user.FailedLoginAttempts++;
 
             if (user.FailedLoginAttempts >= _securitySettings.MaxFailedLoginAttempts)
@@ -150,25 +149,13 @@ public class AuthorizeService(
             return Result.Unauthorized<AuthorizeResponse>("Invalid credentials");
         }
 
-        // Reset failed login attempts
         user.FailedLoginAttempts = 0;
         user.LockoutEndDate = null;
         user.LastLoginAt = DateTimeProvider.GetBangkokTimeZone();
         await _userManager.UpdateAsync(user);
 
-        var metadata = new Dictionary<string, object>
-        {
-            { "userId", user.Id ?? string.Empty },
-            { "firstName", user.FirstName ?? string.Empty },
-            { "lastName", user.LastName ?? string.Empty },
-            { "userName", user.UserName ?? string.Empty },
-            { "isMfaEnabled", user.IsMfaEnabled },
-            { "emailConfirmed", user.EmailConfirmed },
-            { "createdAt", user.CreatedAt.ToString("o") },
-            { "lastLogin", user.LastLoginAt?.ToString("o") ?? string.Empty }
-        };
+        var metadata = BuildMetadata(user);
 
-        // If MFA is enabled, skip token generation and prompt for MFA
         if (user.IsMfaEnabled)
         {
             return Result.Success(new AuthorizeResponse(
@@ -176,35 +163,23 @@ public class AuthorizeService(
                 string.Empty,
                 _jwtSettings.AccessTokenExpirationMinutes,
                 user.IsMfaEnabled,
-                new UserResponse(
-                    user.Id ?? string.Empty,
-                    user.Email ?? string.Empty,
-                    $"{user.FirstName} {user.LastName}",
-                    string.Empty,
-                    metadata
-                )
+                new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, metadata)
             ));
         }
 
-        // Generate tokens
         var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
         var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id!, request.IpAddress);
         await _refreshTokenRepository.AddAsync(refreshToken);
 
-        return Result.Success(new AuthorizeResponse
-        (
+        return Result.Success(new AuthorizeResponse(
             accessToken,
             refreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
-            new UserResponse(
-                user.Id ?? string.Empty,
-                user.Email ?? string.Empty,
-                $"{user.FirstName} {user.LastName}",
-                string.Empty,
-                metadata)
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, metadata)
         ));
     }
+
     public async Task<Result<AuthorizeResponse>> RefreshTokenAsync(RefreshTokenCommand request, CancellationToken cancellationToken = default)
     {
         var token = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken);
@@ -213,35 +188,18 @@ public class AuthorizeService(
             return Result.Unauthorized<AuthorizeResponse>("Invalid or expired refresh token.");
         }
 
-        // Revoke old token and generate new one (token rotation)
         var newRefreshToken = await _jwtTokenGenerator.RotateRefreshTokenAsync(token, request.IpAddress);
         var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(token.User!);
         await _refreshTokenRepository.UpdateAsync(newRefreshToken);
 
-        var metadata = new Dictionary<string, object>
-        {
-            { "userId", token.UserId },
-            { "firstName", token.User!.FirstName ?? string.Empty },
-            { "lastName", token.User.LastName ?? string.Empty },
-            { "userName", token.User.UserName ?? string.Empty },
-            { "isMfaEnabled", token.User.IsMfaEnabled },
-            { "emailConfirmed", token.User.EmailConfirmed },
-            { "createdAt", token.User.CreatedAt.ToString("o") },
-            { "lastLogin", token.User.LastLoginAt?.ToString("o") ?? string.Empty }
-        };
+        var metadata = BuildMetadata(token.User!);
 
-        return Result.Success(new AuthorizeResponse
-        (
+        return Result.Success(new AuthorizeResponse(
             accessToken,
             newRefreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             token.User!.IsMfaEnabled,
-            new UserResponse(
-                token.User!.Id ?? string.Empty,
-                token.User.Email ?? string.Empty,
-                $"{token.User.FirstName} {token.User.LastName}",
-                string.Empty,
-                metadata)
+            new UserResponse(token.User!.Id ?? string.Empty, token.User.Email ?? string.Empty, $"{token.User.FirstName} {token.User.LastName}", string.Empty, metadata)
         ));
     }
 
@@ -272,6 +230,192 @@ public class AuthorizeService(
         return Result.Success<bool>(true);
     }
 
+    public async Task<Result<AuthorizeResponse>> GoogleLoginAsync(string email, string name, string googleId, string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user == null)
+        {
+            var nameParts = name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            user = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = email,
+                UserName = email,
+                FirstName = nameParts.Length > 0 ? nameParts[0] : name,
+                LastName = nameParts.Length > 1 ? nameParts[1] : string.Empty,
+                EmailConfirmed = true,
+                CreatedAt = DateTimeProvider.GetBangkokTimeZone()
+            };
+
+            var createResult = await _userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
+            {
+                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                return Result.Failure<AuthorizeResponse>($"Failed to create user: {errors}");
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
+        }
+
+        var loginInfo = new UserLoginInfo("Google", googleId, "Google");
+        var existingLogins = await _userManager.GetLoginsAsync(user);
+        if (!existingLogins.Any(l => l.LoginProvider == "Google" && l.ProviderKey == googleId))
+        {
+            await _userManager.AddLoginAsync(user, loginInfo);
+        }
+
+        user.LastLoginAt = DateTimeProvider.GetBangkokTimeZone();
+        await _userManager.UpdateAsync(user);
+
+        var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
+        var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id!, ipAddress);
+        await _refreshTokenRepository.AddAsync(refreshToken);
+
+        return Result.Success(new AuthorizeResponse(
+            accessToken,
+            refreshToken.Token,
+            _jwtSettings.AccessTokenExpirationMinutes,
+            user.IsMfaEnabled,
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, BuildMetadata(user))
+        ));
+    }
+
+    public async Task<Result<AuthorizeResponse>> RegisterAsync(string email, string password, string firstName, string lastName, string ipAddress, CancellationToken cancellationToken = default)
+    {
+        var existingUser = await _userManager.FindByEmailAsync(email);
+        if (existingUser != null)
+        {
+            return Result.Failure<AuthorizeResponse>("An account with this email address already exists.");
+        }
+
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            Email = email,
+            UserName = email,
+            FirstName = firstName,
+            LastName = lastName,
+            EmailConfirmed = true,
+            CreatedAt = DateTimeProvider.GetBangkokTimeZone()
+        };
+
+        var createResult = await _userManager.CreateAsync(user, password);
+        if (!createResult.Succeeded)
+        {
+            var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+            return Result.Failure<AuthorizeResponse>($"Registration failed: {errors}");
+        }
+
+        await _userManager.AddToRoleAsync(user, "User");
+
+        var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
+        var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id!, ipAddress);
+        await _refreshTokenRepository.AddAsync(refreshToken);
+
+        return Result.Success(new AuthorizeResponse(
+            accessToken,
+            refreshToken.Token,
+            _jwtSettings.AccessTokenExpirationMinutes,
+            user.IsMfaEnabled,
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, BuildMetadata(user))
+        ));
+    }
+
+    public async Task<Result<bool>> SendPhoneOtpAsync(SendPhoneOtpCommand request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken);
+
+        if (user == null)
+        {
+            return Result.Success<bool>(true);
+        }
+
+        if (string.IsNullOrEmpty(user.Email))
+        {
+            return Result.Failure<bool>("No email linked to this phone number.");
+        }
+
+        var now = DateTimeProvider.GetBangkokTimeZone();
+        const int maxRequestsPerHour = 3;
+        const int windowHours = 1;
+
+        if (!user.PhoneOtpWindowStart.HasValue || user.PhoneOtpWindowStart.Value.AddHours(windowHours) < now)
+        {
+            user.PhoneOtpRequestCount = 0;
+            user.PhoneOtpWindowStart = now;
+        }
+
+        if (user.PhoneOtpRequestCount >= maxRequestsPerHour)
+        {
+            return Result.Failure<bool>("Too many OTP requests. Please try again later.");
+        }
+
+        var otpCode = Random.Shared.Next(100000, 999999).ToString();
+        user.PhoneOtpCode = otpCode;
+        user.PhoneOtpExpiry = now.AddMinutes(5);
+        user.PhoneOtpRequestCount++;
+        await _userManager.UpdateAsync(user);
+
+        var body = new StringBuilder(request.Template);
+        body.Replace("[Name]", user.FirstName ?? user.UserName);
+        body.Replace("[PhoneNumber]", request.PhoneNumber);
+        body.Replace("[OtpCode]", otpCode);
+
+        using var message = new MailMessage(new MailAddress(user.Email), new MailAddress(user.Email))
+        {
+            Subject = "Family Expense Tracker - รหัส OTP เข้าสู่ระบบ",
+            Body = body.ToString(),
+            IsBodyHtml = true
+        };
+
+        await _emailRepository.SendEmailAsync(message, cancellationToken);
+        return Result.Success<bool>(true);
+    }
+
+    public async Task<Result<AuthorizeResponse>> VerifyPhoneOtpAsync(VerifyPhoneOtpCommand request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken);
+
+        if (user == null || string.IsNullOrEmpty(user.PhoneOtpCode))
+        {
+            return Result.Unauthorized<AuthorizeResponse>("Invalid OTP.");
+        }
+
+        var now = DateTimeProvider.GetBangkokTimeZone();
+
+        if (user.PhoneOtpExpiry < now)
+        {
+            return Result.Unauthorized<AuthorizeResponse>("OTP has expired. Please request a new one.");
+        }
+
+        if (user.PhoneOtpCode != request.OtpCode)
+        {
+            return Result.Unauthorized<AuthorizeResponse>("Invalid OTP.");
+        }
+
+        user.PhoneOtpCode = null;
+        user.PhoneOtpExpiry = null;
+        user.PhoneOtpRequestCount = 0;
+        user.PhoneOtpWindowStart = null;
+        user.LastLoginAt = now;
+        await _userManager.UpdateAsync(user);
+
+        var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
+        var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id!, request.IpAddress);
+        await _refreshTokenRepository.AddAsync(refreshToken);
+
+        return Result.Success(new AuthorizeResponse(
+            accessToken,
+            refreshToken.Token,
+            _jwtSettings.AccessTokenExpirationMinutes,
+            user.IsMfaEnabled,
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, BuildMetadata(user))
+        ));
+    }
+
     public async Task<Result<AuthorizeResponse>> VerifyMfaAsync(VerifyMfaQuery request, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByIdAsync(request.UserId);
@@ -280,42 +424,34 @@ public class AuthorizeService(
             return Result.Unauthorized<AuthorizeResponse>("Invalid user or MFA not enabled.");
         }
 
-        // Verify MFA code
         var isCodeValid = _otpService.VerifyTotp(user.MfaSecret, request.MfaCode);
         if (!isCodeValid)
         {
             return Result.Unauthorized<AuthorizeResponse>("Invalid MFA code.");
         }
 
-        // Generate tokens
         var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
         var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id, request.IpAddress);
         await _refreshTokenRepository.AddAsync(refreshToken);
 
-        var metadata = new Dictionary<string, object>
-        {
-            { "userId", user.Id ?? string.Empty },
-            { "firstName", user.FirstName ?? string.Empty },
-            { "lastName", user.LastName ?? string.Empty },
-            { "userName", user.UserName ?? string.Empty },
-            { "isMfaEnabled", user.IsMfaEnabled },
-            { "emailConfirmed", user.EmailConfirmed },
-            { "createdAt", user.CreatedAt.ToString("o") },
-            { "lastLogin", user.LastLoginAt?.ToString("o") ?? string.Empty }
-        };
-
-        return Result.Success(new AuthorizeResponse
-        (
+        return Result.Success(new AuthorizeResponse(
             accessToken,
             refreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
-            new UserResponse(
-                user.Id ?? string.Empty,
-                user.Email ?? string.Empty,
-                $"{user.FirstName} {user.LastName}",
-                string.Empty,
-                metadata)
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, BuildMetadata(user))
         ));
     }
+
+    private static Dictionary<string, object> BuildMetadata(ApplicationUser user) => new()
+    {
+        { "userId", user.Id ?? string.Empty },
+        { "firstName", user.FirstName ?? string.Empty },
+        { "lastName", user.LastName ?? string.Empty },
+        { "userName", user.UserName ?? string.Empty },
+        { "isMfaEnabled", user.IsMfaEnabled },
+        { "emailConfirmed", user.EmailConfirmed },
+        { "createdAt", user.CreatedAt.ToString("o") },
+        { "lastLogin", user.LastLoginAt?.ToString("o") ?? string.Empty }
+    };
 }

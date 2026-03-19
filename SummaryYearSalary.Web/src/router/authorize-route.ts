@@ -41,6 +41,22 @@ export const AuthorizeRoutes = [
     },
   },
   {
+    path: 'google/callback',
+    name: 'GoogleCallback',
+    component: () => import('@/views/authorize/GoogleCallback.vue'),
+    meta: {
+      title: 'Signing in with Google...',
+    },
+  },
+  {
+    path: 'register',
+    name: 'Register',
+    component: () => import('@/views/authorize/Register.vue'),
+    meta: {
+      title: 'สมัครสมาชิก',
+    },
+  },
+  {
     path: '',
     redirect: '/authorize/login',
   },
