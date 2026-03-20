@@ -348,13 +348,17 @@ const formatDate = (date: string | undefined) => {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem;
-  background: #f7fafc;
+  background: var(--surface-dark);
   border-radius: 10px;
   transition: all 0.2s ease;
 }
 
 .setting-item:hover {
-  background: #edf2f7;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] .setting-item:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .setting-info {
@@ -367,25 +371,25 @@ const formatDate = (date: string | undefined) => {
 .setting-icon {
   width: 40px;
   height: 40px;
-  background: white;
+  background: var(--surface);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #667eea;
+  color: var(--primary-light);
   flex-shrink: 0;
 }
 
 .setting-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--text);
   margin: 0 0 0.25rem 0;
 }
 
 .setting-description {
   font-size: 0.85rem;
-  color: #718096;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -401,19 +405,19 @@ const formatDate = (date: string | undefined) => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #f7fafc;
+  background: var(--surface-dark);
   border-radius: 8px;
 }
 
 .info-label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #4a5568;
+  color: var(--text-light);
 }
 
 .info-value {
   font-size: 0.9rem;
-  color: #1a202c;
+  color: var(--text);
   font-weight: 500;
 }
 
@@ -425,13 +429,13 @@ const formatDate = (date: string | undefined) => {
 }
 
 .status-success {
-  background: #c6f6d5;
-  color: #22543d;
+  background: var(--success-light);
+  color: var(--success-dark);
 }
 
 .status-warning {
-  background: #feebc8;
-  color: #7c2d12;
+  background: rgba(217, 119, 6, 0.15);
+  color: var(--warning);
 }
 
 /* MFA Modal Styles */
@@ -441,7 +445,7 @@ const formatDate = (date: string | undefined) => {
 
 .instruction-text {
   font-size: 0.95rem;
-  color: #4a5568;
+  color: var(--text-light);
   line-height: 1.6;
   margin: 0;
   text-align: center;
@@ -452,7 +456,7 @@ const formatDate = (date: string | undefined) => {
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  background: #f7fafc;
+  background: var(--surface-dark);
   border-radius: 12px;
   margin-bottom: 1.5rem;
 }
@@ -464,7 +468,7 @@ const formatDate = (date: string | undefined) => {
 }
 
 .manual-entry {
-  background: #edf2f7;
+  background: var(--surface-dark);
   padding: 1.25rem;
   border-radius: 10px;
   text-align: center;
@@ -473,7 +477,7 @@ const formatDate = (date: string | undefined) => {
 
 .manual-entry-label {
   font-size: 0.85rem;
-  color: #4a5568;
+  color: var(--text-light);
   margin: 0 0 0.75rem 0;
   font-weight: 600;
 }
@@ -483,16 +487,16 @@ const formatDate = (date: string | undefined) => {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background: white;
+  background: var(--surface);
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  border: 2px dashed #cbd5e0;
+  border: 2px dashed var(--border);
 }
 
 .secret-code code {
   font-family: 'Courier New', monospace;
   font-size: 1rem;
-  color: #667eea;
+  color: var(--primary-light);
   font-weight: 600;
   letter-spacing: 0.05em;
 }
@@ -501,7 +505,7 @@ const formatDate = (date: string | undefined) => {
   background: none;
   border: none;
   cursor: pointer;
-  color: #667eea;
+  color: var(--primary-light);
   padding: 0.25rem;
   display: flex;
   align-items: center;
@@ -511,14 +515,13 @@ const formatDate = (date: string | undefined) => {
 }
 
 .btn-copy:hover {
-  background: #f7fafc;
-  color: #5a67d8;
+  background: var(--surface-dark);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border);
 }
 </style>

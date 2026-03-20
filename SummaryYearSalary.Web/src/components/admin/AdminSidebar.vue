@@ -1,163 +1,219 @@
 <template>
-  <aside :class="['sidebar', { open: props.open, collapsed: props.collapsed }]">
-    <div class="sidebar-inner">
-      <div class="sidebar-content-wrapper">
-        <div class="sidebar-content">
-          <div class="sidebar-header">
-            <div
-              style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                width: 100%;
-              "
-            >
-              <SidebarLogo logo="Place logo here" :is-dark="false" />
-              <button
-                class="toggle-sidebar"
-                aria-label="Close sidebar"
-                type="button"
-                @click="emit('toggle-sidebar')"
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <nav class="nav-menu">
-            <SidebarSection
-              v-for="section in menuSections"
-              :key="section.title"
-              :title="section.title"
-            >
-              <SidebarNavItem
-                v-for="item in section.items"
-                :key="item.label"
-                :href="item.href"
-                :active="activeNav.valueOf() === item.label"
-                @click="() => handleNavItemClick(item.label)"
-              >
-                <template #icon>{{ item.icon }}</template>
-                {{ item.label }}
-              </SidebarNavItem>
-            </SidebarSection>
-          </nav>
-        </div>
-        <div class="sidebar-version">v{{ appVersion }}</div>
-      </div>
+  <div class="sidebar-wrap" :class="{ 'is-collapsed': props.collapsed }">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <el-icon size="26" class="logo-icon"><Wallet /></el-icon>
+      <span v-if="!props.collapsed" class="logo-text">Family Expense</span>
     </div>
-  </aside>
+
+    <!-- Nav: collapsed mode = custom icon buttons -->
+    <div v-if="props.collapsed" class="nav-collapsed">
+      <template v-for="section in menuSections" :key="section.title">
+        <el-tooltip
+          v-for="item in section.items"
+          :key="item.path"
+          :content="item.label"
+          placement="right"
+          :show-after="200"
+        >
+          <div
+            class="nav-icon-btn"
+            :class="{ active: isActive(item.path) }"
+            @click="navigate(item.path)"
+          >
+            <el-icon size="18"><component :is="item.icon" /></el-icon>
+          </div>
+        </el-tooltip>
+      </template>
+    </div>
+
+    <!-- Nav: expanded mode = el-menu -->
+    <el-scrollbar v-else class="sidebar-scrollbar">
+      <el-menu :default-active="route.path" router :collapse-transition="false" class="sidebar-menu">
+        <template v-for="section in menuSections" :key="section.title">
+          <div class="menu-section-label">{{ section.title }}</div>
+          <el-menu-item
+            v-for="item in section.items"
+            :key="item.path"
+            :index="item.path"
+            @click="emit('close')"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <template #title>{{ item.label }}</template>
+          </el-menu-item>
+        </template>
+      </el-menu>
+    </el-scrollbar>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <el-icon v-if="props.collapsed" size="14"><InfoFilled /></el-icon>
+      <span v-else>v{{ appVersion }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { APP_VERSION } from '@/constants/version';
 
+const props = defineProps<{ collapsed?: boolean }>();
+const emit = defineEmits(['close']);
+const route = useRoute();
+const router = useRouter();
 const appVersion = APP_VERSION;
 
-const props = defineProps<{ open: boolean; collapsed?: boolean }>();
-const emit = defineEmits(['toggle-sidebar', 'close-sidebar']);
+const menuSections = [
+  {
+    title: 'GENERAL',
+    items: [{ path: '/pages/users/profile', label: 'User Profile', icon: 'UserFilled' }],
+  },
+  {
+    title: 'DEV',
+    items: [{ path: '/pages/ui-test', label: 'UI Test', icon: 'Monitor' }],
+  },
+];
 
-// Ensure activeNav is a ref and not shadowed
-const activeNav = ref<string>('Dashboard');
+const isActive = (path: string) => route.path === path || route.path.startsWith(path + '/');
 
-function handleNavItemClick(label: string) {
-  activeNav.value = label;
-  emit('close-sidebar');
+function navigate(path: string) {
+  router.push(path);
+  emit('close');
 }
-
-onMounted(() => {
-  const path = window.location.pathname.toLowerCase();
-  const navMap: Record<string, string> = {
-    users: 'Users',
-  };
-
-  const found = Object.entries(navMap).find(([key]) => path.includes(key));
-  activeNav.value = found ? found[1] : 'Dashboard';
-});
-
-interface MenuItem {
-  icon: string;
-  label: string;
-  href: string;
-}
-
-const menuSections = computed(() => {
-  const sections = [
-    {
-      title: 'User Management',
-      items: [{ icon: '👤', label: 'User Profile', href: '/pages/users/profile' }].filter(
-        (item): item is MenuItem => item !== null
-      ),
-    },
-  ];
-
-  // Filter out sections that have no items
-  return sections.filter((section) => section.items.length > 0);
-});
 </script>
 
 <style scoped>
-.sidebar-inner {
+.sidebar-wrap {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--sidebar-bg, #ffffff);
 }
 
-.sidebar-content-wrapper {
+[data-theme='dark'] .sidebar-wrap {
+  background: #1e1e2e;
+}
+
+/* ── Logo ─────────────────────────────── */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: padding 0.25s ease;
+}
+
+.is-collapsed .sidebar-logo {
+  justify-content: center;
+  padding: 0;
+}
+
+.logo-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ── Collapsed nav (custom icon buttons) ─ */
+.nav-collapsed {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  flex: 1;
+  align-items: center;
+  padding: 8px 0;
+  overflow-y: auto;
 }
 
-.sidebar-content {
-  flex: 1;
-}
-
-.sidebar-version {
-  width: 100%;
-  padding: 0.48rem 0;
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--layout-text);
-  background: var(--layout-bg);
-  border-top: 1px solid var(--layout-border);
-  letter-spacing: 0.03em;
-  flex-shrink: 0;
-  margin-top: auto;
-}
-
-.toggle-sidebar {
-  background: none;
-  border: none;
-  padding: 0.25rem;
-  margin-left: 0.5rem;
+.nav-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  margin: 2px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: #4a5568;
-  display: none;
+  color: var(--text);
+  transition: background 0.15s ease;
+  flex-shrink: 0;
 }
 
-@media (max-width: 1024px) {
-  .toggle-sidebar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
+.nav-icon-btn:hover:not(.active) {
+  background: rgba(0, 84, 233, 0.1);
 }
 
-.toggle-sidebar svg {
-  width: 1.5rem;
-  height: 1.5rem;
+.nav-icon-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.nav-icon-btn.active :deep(.el-icon) {
+  color: #ffffff;
+}
+
+/* ── Expanded nav (el-menu) ───────────── */
+.sidebar-scrollbar {
+  flex: 1;
+  overflow: hidden;
+}
+
+:deep(.el-menu) {
+  --el-menu-bg-color: transparent;
+  background-color: transparent !important;
+  border-right: none !important;
+}
+
+:deep(.el-menu-item) {
+  height: 44px;
+  margin: 2px 8px;
+  border-radius: 8px;
+  width: calc(100% - 16px);
+  color: var(--text);
+}
+
+:deep(.el-menu-item.is-active) {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+:deep(.el-menu-item:hover:not(.is-active)) {
+  background: rgba(0, 84, 233, 0.08) !important;
+}
+
+.menu-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-light);
+  padding: 16px 20px 4px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Footer ──────────────────────────── */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.is-collapsed .sidebar-footer {
+  justify-content: center;
+  padding: 10px;
 }
 </style>

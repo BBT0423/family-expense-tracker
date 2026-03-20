@@ -13,48 +13,48 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiTarget = env.VITE_API_BASE_URL || 'http://localhost:5001';
 
-  return ({
-  plugins: [
-    vue(),
-    tailwindcss(),
-    ElementPlus(),
-    AutoImport({
-      imports: ['vue', 'vue-router', 'pinia'],
-      resolvers: [ElementPlusResolver()],
-      dts: 'src/auto-imports.d.ts',
-    }),
-    Components({
-      dirs: ['src/components'],
-      extensions: ['vue'],
-      deep: true,
-      dts: 'src/components.d.ts',
-      directoryAsNamespace: false,
-      resolvers: [ElementPlusResolver()],
-    }),
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: apiTarget,
-        changeOrigin: true,
+  return {
+    plugins: [
+      vue(),
+      tailwindcss(),
+      ElementPlus(),
+      AutoImport({
+        imports: ['vue', 'vue-router', 'pinia'],
+        resolvers: [ElementPlusResolver()],
+        dts: 'src/auto-imports.d.ts',
+      }),
+      Components({
+        dirs: ['src/components'],
+        extensions: ['vue'],
+        deep: true,
+        dts: 'src/components.d.ts',
+        directoryAsNamespace: false,
+        resolvers: [ElementPlusResolver()],
+      }),
+    ],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
-  },
-  build: {
-    target: 'es2022',
-    sourcemap: false,
-  },
-  define: {
-    __VUE_PROD_DEVTOOLS__: mode !== 'production',
-  },
-  esbuild: {
-    drop: mode === 'production' ? ['console'] : [],
-  },
-});
+    server: {
+      port: 5173,
+      proxy: {
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+        },
+      },
+    },
+    build: {
+      target: 'es2022',
+      sourcemap: false,
+    },
+    define: {
+      __VUE_PROD_DEVTOOLS__: mode !== 'production',
+    },
+    esbuild: {
+      drop: mode === 'production' ? ['console'] : [],
+    },
+  };
 });
