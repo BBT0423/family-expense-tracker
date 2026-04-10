@@ -2,6 +2,8 @@
  * Authentication related type definitions
  */
 
+export type LoginProvider = 'email' | 'google' | 'phone';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -18,6 +20,7 @@ export interface LoginResponse {
     name: string;
     avatar: string;
     metadata: Record<string, any>;
+    loginProvider?: LoginProvider;
   };
 }
 
@@ -37,6 +40,7 @@ export interface VerifyMfaResponse {
     name: string;
     avatar: string;
     metadata: Record<string, any>;
+    loginProvider?: LoginProvider;
   };
 }
 

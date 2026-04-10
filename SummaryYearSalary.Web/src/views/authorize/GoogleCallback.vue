@@ -16,8 +16,7 @@
 import { onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
-import { SecureStorage } from '@/utils/storage';
-import { STORAGE_APP_LOCKED, STORAGE_LAST_ACTIVITY } from '@/constants/storage';
+import { STORAGE_LAST_ACTIVITY } from '@/constants/storage';
 
 const router = useRouter();
 const route = useRoute();
@@ -62,10 +61,10 @@ onMounted(async () => {
       name: route.query.name ? decodeURIComponent(route.query.name as string) : '',
       avatar: route.query.avatar ? decodeURIComponent(route.query.avatar as string) : '',
       metadata,
+      loginProvider: 'google',
     },
   });
 
-  SecureStorage.removeItem(STORAGE_APP_LOCKED);
   localStorage.removeItem(STORAGE_LAST_ACTIVITY);
 
   const redirectUrl = sessionStorage.getItem('REDIRECT_URL');

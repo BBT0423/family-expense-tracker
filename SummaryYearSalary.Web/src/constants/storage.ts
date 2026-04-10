@@ -6,3 +6,4 @@ export const STORAGE_THEME = 'theme';
 export const STORAGE_IDLE_TIMEOUT = 'idle-timeout';
 export const STORAGE_LAST_ACTIVITY = 'last-activity';
 export const STORAGE_APP_LOCKED = 'app-locked';
+export const STORAGE_LOGIN_PROVIDER = 'login-provider';

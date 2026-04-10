@@ -40,8 +40,8 @@
           <p class="lock-message">Your session has been locked due to inactivity</p>
         </div>
 
-        <!-- Unlock Form -->
-        <form class="unlock-form" @submit.prevent="handleUnlock">
+        <!-- Unlock Form (email users only) -->
+        <form v-if="!isPasswordlessUser" class="unlock-form" @submit.prevent="handleUnlock">
           <div class="form-group">
             <label for="password" class="form-label">Password</label>
             <div class="password-input-wrapper">
@@ -124,8 +124,26 @@
           </button>
         </form>
 
-        <!-- Additional Actions -->
-        <div class="lock-actions">
+        <!-- Passwordless notice (Google / Phone users) -->
+        <div v-else class="passwordless-lock-notice">
+          <p v-if="authStore.loginProvider === 'google'" class="passwordless-lock-text">
+            กรุณาออกจากระบบและ Sign in with Google อีกครั้ง
+          </p>
+          <p v-else class="passwordless-lock-text">
+            กรุณาออกจากระบบและเข้าสู่ระบบด้วยเบอร์โทรอีกครั้ง
+          </p>
+          <button
+            type="button"
+            class="unlock-button"
+            :disabled="isUnlocking"
+            @click="handleLogout"
+          >
+            ออกจากระบบ
+          </button>
+        </div>
+
+        <!-- Additional Actions (email users only) -->
+        <div v-if="!isPasswordlessUser" class="lock-actions">
           <button class="logout-link" :disabled="isUnlocking" @click="handleLogout">
             Sign in as different user
           </button>
@@ -165,6 +183,7 @@ const isUnlocking = ref(false);
 const lockedTimeText = ref('just now');
 
 const user = computed(() => authStore.user);
+const isPasswordlessUser = computed(() => authStore.loginProvider !== 'email');
 
 const userInitials = computed(() => {
   if (!user.value?.name) return 'U';
@@ -372,6 +391,22 @@ const handleLogout = () => {
 
 .unlock-form {
   margin-bottom: 24px;
+}
+
+.passwordless-lock-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0 24px;
+}
+
+.passwordless-lock-text {
+  color: #4a5568;
+  font-size: 15px;
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .form-group {

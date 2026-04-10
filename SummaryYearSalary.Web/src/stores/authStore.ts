@@ -8,8 +8,9 @@ import {
   STORAGE_USER,
   STORAGE_APP_LOCKED,
   STORAGE_LAST_ACTIVITY,
+  STORAGE_LOGIN_PROVIDER,
 } from '@/constants/storage';
-import type { LoginResponse } from '@/types';
+import type { LoginResponse, LoginProvider } from '@/types';
 
 export const useAuthStore = defineStore('auth', () => {
   // Auth state
@@ -22,6 +23,9 @@ export const useAuthStore = defineStore('auth', () => {
   );
   const user = ref<LoginResponse['user'] | null>(
     SecureStorage.getItem(STORAGE_USER) ? JSON.parse(SecureStorage.getItem(STORAGE_USER)!) : null
+  );
+  const loginProvider = ref<LoginProvider | null>(
+    (localStorage.getItem(STORAGE_LOGIN_PROVIDER) as LoginProvider | null)
   );
 
   const isAuthenticated = computed(() => !!token.value && !!user.value);
@@ -43,6 +47,10 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = auth.refreshToken;
     expiresIn.value = auth.expiresIn;
     user.value = auth.user;
+    const provider = auth.user.loginProvider ?? 'email';
+    loginProvider.value = provider;
+    localStorage.setItem(STORAGE_LOGIN_PROVIDER, provider);
+    localStorage.removeItem(STORAGE_APP_LOCKED);
     SecureStorage.setItem(STORAGE_TOKEN, auth.token);
     SecureStorage.setItem(STORAGE_REFRESH_TOKEN, auth.refreshToken);
     SecureStorage.setItem(STORAGE_EXPIRES_IN, String(auth.expiresIn));
@@ -54,12 +62,14 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null;
     expiresIn.value = null;
     user.value = null;
+    loginProvider.value = null;
     SecureStorage.removeItem(STORAGE_TOKEN);
     SecureStorage.removeItem(STORAGE_REFRESH_TOKEN);
     SecureStorage.removeItem(STORAGE_EXPIRES_IN);
     SecureStorage.removeItem(STORAGE_USER);
     SecureStorage.removeItem(STORAGE_APP_LOCKED);
     localStorage.removeItem(STORAGE_LAST_ACTIVITY);
+    localStorage.removeItem(STORAGE_LOGIN_PROVIDER);
   }
 
   // Sync auth state from localStorage (called by storage event listener in App.vue)
@@ -74,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = storedRefreshToken;
     expiresIn.value = storedExpiresIn ? Number(storedExpiresIn) : null;
     user.value = storedUser ? JSON.parse(storedUser) : null;
+    loginProvider.value = localStorage.getItem(STORAGE_LOGIN_PROVIDER) as LoginProvider | null;
   }
 
   function updateUserMetadata(metadata: Record<string, any>) {
@@ -88,6 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     expiresIn,
     user,
+    loginProvider,
     isAuthenticated,
     setAuth,
     clearAuth,

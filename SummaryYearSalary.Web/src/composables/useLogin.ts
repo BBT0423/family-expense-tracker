@@ -5,8 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/authService';
 import type { LoginRequest } from '@/types/authorize';
 import { toProblemDetails } from '@/utils/utilities';
-import { SecureStorage } from '@/utils/storage';
-import { STORAGE_APP_LOCKED, STORAGE_LAST_ACTIVITY } from '@/constants/storage';
+import { STORAGE_LAST_ACTIVITY } from '@/constants/storage';
 
 const REQUIRED_FIELD_SUFFIX = ' is required.';
 const CREDENTIAL_LABEL = 'Password';
@@ -62,7 +61,6 @@ export const useLogin = () => {
    * Returns the destination path for logging/debugging
    */
   const initAuth = async (): Promise<string> => {
-    SecureStorage.removeItem(STORAGE_APP_LOCKED);
     localStorage.removeItem(STORAGE_LAST_ACTIVITY);
 
     // Handle external callback (ICSS Web, etc.)
@@ -100,7 +98,7 @@ export const useLogin = () => {
         }
 
         // No MFA required - set auth state and navigate
-        setAuth(data.value);
+        setAuth({ ...data.value, user: { ...data.value.user, loginProvider: 'email' } });
 
         // Navigate to appropriate destination
         const destination = await initAuth();

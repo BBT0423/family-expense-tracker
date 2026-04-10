@@ -75,8 +75,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/authService';
 import { toProblemDetails } from '@/utils/utilities';
 import { APP_VERSION } from '@/constants/version';
-import { SecureStorage } from '@/utils/storage';
-import { STORAGE_APP_LOCKED, STORAGE_LAST_ACTIVITY } from '@/constants/storage';
+import { STORAGE_LAST_ACTIVITY } from '@/constants/storage';
 
 const router = useRouter();
 const route = useRoute();
@@ -180,10 +179,8 @@ const verifyOtp = async () => {
 
     if (data.isSuccess && data.value) {
       // Set auth state
-      setAuth(data.value);
+      setAuth({ ...data.value, user: { ...data.value.user, loginProvider: 'email' } });
 
-      // Clear app lock state
-      SecureStorage.removeItem(STORAGE_APP_LOCKED);
       localStorage.removeItem(STORAGE_LAST_ACTIVITY);
 
       // Navigate to admin pages

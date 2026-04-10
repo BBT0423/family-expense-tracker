@@ -4,8 +4,7 @@ import { useGlobalUi } from '@/composables/useGlobalUi';
 import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/authService';
 import { toProblemDetails } from '@/utils/utilities';
-import { SecureStorage } from '@/utils/storage';
-import { STORAGE_APP_LOCKED, STORAGE_LAST_ACTIVITY } from '@/constants/storage';
+import { STORAGE_LAST_ACTIVITY } from '@/constants/storage';
 
 export const usePhoneLogin = () => {
   const router = useRouter();
@@ -100,8 +99,7 @@ export const usePhoneLogin = () => {
       });
 
       if (data.isSuccess && data.value) {
-        setAuth(data.value);
-        SecureStorage.removeItem(STORAGE_APP_LOCKED);
+        setAuth({ ...data.value, user: { ...data.value.user, loginProvider: 'phone' } });
         localStorage.removeItem(STORAGE_LAST_ACTIVITY);
 
         const redirectUrl = sessionStorage.getItem('REDIRECT_URL');
