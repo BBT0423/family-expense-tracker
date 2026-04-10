@@ -9,6 +9,7 @@ using SummaryYearSalary.Domain.Entities;
 using SummaryYearSalary.Infrastructure;
 using SummaryYearSalary.Infrastructure.Data;
 
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -122,6 +123,9 @@ public static partial class Program
 
                     // Apply migrations
                     await context.Database.MigrateAsync();
+
+                    // Seed default categories
+                    await CategorySeeder.SeedDefaultCategoriesAsync(context);
 
                     // Seed roles
                     await SeedRolesAsync(roleManager);

@@ -1,6 +1,7 @@
 using SummaryYearSalary.Domain.Common;
 using SummaryYearSalary.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -15,6 +16,10 @@ public class SummaryYearSalaryDbContext : IdentityDbContext<ApplicationUser, Ide
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<FamilyMember> FamilyMembers => Set<FamilyMember>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<Budget> Budgets => Set<Budget>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

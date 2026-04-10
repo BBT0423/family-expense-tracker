@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npx vue-tsc:*)"
+    ]
+  }
+}

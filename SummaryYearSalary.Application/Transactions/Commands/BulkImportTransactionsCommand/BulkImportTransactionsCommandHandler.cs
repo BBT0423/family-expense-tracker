@@ -1,0 +1,66 @@
+using SummaryYearSalary.Application.Common;
+using SummaryYearSalary.Application.Interfaces;
+using SummaryYearSalary.Application.Interfaces.IRepositories;
+using SummaryYearSalary.Domain.Entities;
+
+using MediatR;
+
+namespace SummaryYearSalary.Application.Transactions.Commands.BulkImportTransactionsCommand;
+
+public class BulkImportTransactionsCommandHandler(
+    ITransactionRepository transactionRepository,
+    IFamilyMemberRepository memberRepository,
+    ICategoryRepository categoryRepository,
+    IUnitOfWork unitOfWork
+) : IRequestHandler<BulkImportTransactionsCommand, Result<int>>
+{
+    private readonly ITransactionRepository _transactionRepository = transactionRepository;
+    private readonly IFamilyMemberRepository _memberRepository = memberRepository;
+    private readonly ICategoryRepository _categoryRepository = categoryRepository;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+
+    public async Task<Result<int>> Handle(BulkImportTransactionsCommand request, CancellationToken cancellationToken)
+    {
+        var members = (await _memberRepository.GetByUserIdAsync(request.UserId))
+            .ToDictionary(m => m.Id);
+        var categories = (await _categoryRepository.GetByUserIdAsync(request.UserId))
+            .ToDictionary(c => c.Id);
+
+        var transactions = new List<Transaction>();
+
+        foreach (var item in request.Items)
+        {
+            if (!members.ContainsKey(item.MemberId) || !categories.ContainsKey(item.CategoryId))
+                continue;
+
+            transactions.Add(new Transaction
+            {
+                UserId = request.UserId,
+                MemberId = item.MemberId,
+                CategoryId = item.CategoryId,
+                Type = item.Type,
+                Amount = item.Amount,
+                Note = item.Note,
+                TransactionDate = item.TransactionDate
+            });
+        }
+
+        if (transactions.Count == 0)
+            return Result.Failure<int>("ไม่มีรายการที่สามารถนำเข้าได้");
+
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            await _transactionRepository.AddRangeAsync(transactions);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
+
+        return Result.Success(transactions.Count);
+    }
+}

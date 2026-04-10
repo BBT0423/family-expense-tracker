@@ -29,7 +29,12 @@
 
     <!-- Nav: expanded mode = el-menu -->
     <el-scrollbar v-else class="sidebar-scrollbar">
-      <el-menu :default-active="route.path" router :collapse-transition="false" class="sidebar-menu">
+      <el-menu
+        :default-active="route.path"
+        router
+        :collapse-transition="false"
+        class="sidebar-menu"
+      >
         <template v-for="section in menuSections" :key="section.title">
           <div class="menu-section-label">{{ section.title }}</div>
           <el-menu-item
@@ -65,12 +70,27 @@ const appVersion = APP_VERSION;
 
 const menuSections = [
   {
-    title: 'GENERAL',
-    items: [{ path: '/pages/users/profile', label: 'User Profile', icon: 'UserFilled' }],
+    title: 'OVERVIEW',
+    items: [{ path: '/pages/dashboard', label: 'แดชบอร์ด', icon: 'DataLine' }],
   },
   {
-    title: 'DEV',
-    items: [{ path: '/pages/ui-test', label: 'UI Test', icon: 'Monitor' }],
+    title: 'รายการ',
+    items: [
+      { path: '/pages/transactions', label: 'รายการธุรกรรม', icon: 'List' },
+      { path: '/pages/transactions/add', label: 'เพิ่มรายการ', icon: 'Plus' },
+      { path: '/pages/import', label: 'นำเข้าข้อมูล', icon: 'Upload' },
+    ],
+  },
+  {
+    title: 'วิเคราะห์',
+    items: [{ path: '/pages/reports', label: 'รายงาน', icon: 'TrendCharts' }],
+  },
+  {
+    title: 'จัดการ',
+    items: [
+      { path: '/pages/settings', label: 'ตั้งค่า', icon: 'Setting' },
+      { path: '/pages/users/profile', label: 'โปรไฟล์', icon: 'UserFilled' },
+    ],
   },
 ];
 

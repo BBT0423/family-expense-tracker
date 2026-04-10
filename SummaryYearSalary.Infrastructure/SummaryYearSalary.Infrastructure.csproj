@@ -18,6 +18,8 @@
     <PackageReference Include="Otp.NET" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="ClosedXML" />
+    <PackageReference Include="System.IO.Packaging" />
     <PackageReference Include="FluentEmail.Core" />
     <PackageReference Include="FluentEmail.Smtp" />
   </ItemGroup>

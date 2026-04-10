@@ -6,6 +6,7 @@ using System.Threading.RateLimiting;
 using SummaryYearSalary.Application.Interfaces;
 using SummaryYearSalary.Application.Interfaces.IRepositories;
 using SummaryYearSalary.Application.Interfaces.IServices;
+
 using SummaryYearSalary.Domain.Entities;
 using SummaryYearSalary.Infrastructure.Common;
 using SummaryYearSalary.Infrastructure.Data;
@@ -334,6 +335,12 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+        services.AddScoped<IFamilyMemberRepository, FamilyMemberRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<IBudgetRepository, BudgetRepository>();
+        services.AddScoped<IExcelExportService, ExcelExportService>();
 
         return services;
     }

@@ -59,11 +59,7 @@ export function useNotify() {
    * Notify — corner notification พร้อม title
    * @example notify('โหลดข้อมูลสำเร็จ', 'success', { title: 'สำเร็จ' })
    */
-  function notify(
-    message: string,
-    type: NotifyType = 'info',
-    options: NotifyOptions = {}
-  ): void {
+  function notify(message: string, type: NotifyType = 'info', options: NotifyOptions = {}): void {
     // ── EP: ElNotification ────────────────────────────────────────────────
     ElNotification({
       title: options.title ?? capitalize(type),
@@ -81,10 +77,7 @@ export function useNotify() {
    * const ok = await confirm('ลบข้อมูลนี้?', { dangerConfirm: true })
    * if (ok) { ... }
    */
-  async function confirm(
-    message: string,
-    options: ConfirmOptions = {}
-  ): Promise<boolean> {
+  async function confirm(message: string, options: ConfirmOptions = {}): Promise<boolean> {
     try {
       // ── EP: ElMessageBox.confirm ────────────────────────────────────────
       await ElMessageBox.confirm(message, options.title ?? 'ยืนยัน', {
@@ -104,11 +97,7 @@ export function useNotify() {
    * Alert — Promise-based alert (1 ปุ่ม OK) รอจนผู้ใช้กดปิด
    * @example await alert('Session หมดอายุ', 'warning', 'แจ้งเตือน')
    */
-  async function alert(
-    message: string,
-    type: NotifyType = 'info',
-    title?: string
-  ): Promise<void> {
+  async function alert(message: string, type: NotifyType = 'info', title?: string): Promise<void> {
     // ── EP: ElMessageBox.alert ────────────────────────────────────────────
     await ElMessageBox.alert(message, title ?? capitalize(type), {
       type,
@@ -128,7 +117,18 @@ export function useNotify() {
     return ElLoading.service({
       lock: true,
       text,
+      // svgViewBox: '-10, -10, 50, 50',
       background: 'rgba(0, 0, 0, 0.55)',
+      // spinner: `
+      //   <path class="path" d="
+      //     M 30 15
+      //     L 28 17
+      //     M 25.61 25.61
+      //     A 15 15, 0, 0, 1, 15 30
+      //     A 15 15, 0, 1, 1, 27.99 7.5
+      //     L 15 15
+      //   " style="stroke-width: 4px; fill: rgba(0, 0, 0, 0)"/>
+      // `
     });
     // ──────────────────────────────────────────────────────────────────────
   }

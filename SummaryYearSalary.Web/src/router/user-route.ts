@@ -1,9 +1,5 @@
 export const UserRoutes = [
   {
-    path: '',
-    redirect: { name: 'UserProfile' },
-  },
-  {
     path: 'users/profile',
     name: 'UserProfile',
     component: () => import('@/views/user/ProfileView.vue'),

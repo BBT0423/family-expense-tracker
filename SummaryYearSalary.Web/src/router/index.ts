@@ -4,6 +4,7 @@ import AuthorizeLayout from '@/layouts/AuthorizeLayout.vue';
 import routeMiddleware from './route-middleware';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { UserRoutes } from './user-route';
+import { BudgetRoutes } from './budget-route';
 
 const routes = [
   {
@@ -21,7 +22,7 @@ const routes = [
     meta: {
       requiresAuth: true,
     },
-    children: [...UserRoutes],
+    children: [...UserRoutes, ...BudgetRoutes],
   },
   {
     path: '/:pathMatch(.*)*',

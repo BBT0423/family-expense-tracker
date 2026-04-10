@@ -32,16 +32,29 @@
       <div class="test-section">
         <h4 class="section-title">Notification <code>notify(message, type, options)</code></h4>
         <div class="btn-row">
-          <el-button type="success" @click="notify.notify('โหลดข้อมูลเรียบร้อย', 'success', { title: 'สำเร็จ' })">
+          <el-button
+            type="success"
+            @click="notify.notify('โหลดข้อมูลเรียบร้อย', 'success', { title: 'สำเร็จ' })"
+          >
             <el-icon><BellFilled /></el-icon> Success
           </el-button>
-          <el-button type="danger" @click="notify.notify('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์', 'error', { title: 'ผิดพลาด' })">
+          <el-button
+            type="danger"
+            @click="notify.notify('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์', 'error', { title: 'ผิดพลาด' })"
+          >
             <el-icon><BellFilled /></el-icon> Error
           </el-button>
-          <el-button type="warning" @click="notify.notify('Session ใกล้หมดอายุ', 'warning', { title: 'แจ้งเตือน', duration: 0 })">
+          <el-button
+            type="warning"
+            @click="
+              notify.notify('Session ใกล้หมดอายุ', 'warning', { title: 'แจ้งเตือน', duration: 0 })
+            "
+          >
             <el-icon><BellFilled /></el-icon> Warning (persistent)
           </el-button>
-          <el-button @click="notify.notify('มีการอัปเดตใหม่', 'info', { position: 'bottom-right' })">
+          <el-button
+            @click="notify.notify('มีการอัปเดตใหม่', 'info', { position: 'bottom-right' })"
+          >
             <el-icon><BellFilled /></el-icon> Bottom-right
           </el-button>
         </div>
@@ -58,7 +71,11 @@
             <el-icon><Delete /></el-icon> Confirm (danger)
           </el-button>
         </div>
-        <div v-if="confirmResult !== null" class="result-badge" :class="confirmResult ? 'result-ok' : 'result-cancel'">
+        <div
+          v-if="confirmResult !== null"
+          class="result-badge"
+          :class="confirmResult ? 'result-ok' : 'result-cancel'"
+        >
           ผลลัพธ์: {{ confirmResult ? '✅ ยืนยัน (true)' : '❌ ยกเลิก (false)' }}
         </div>
       </div>
@@ -70,10 +87,16 @@
           <el-button type="success" @click="notify.alert('ดำเนินการสำเร็จ', 'success', 'สำเร็จ')">
             Alert Success
           </el-button>
-          <el-button type="warning" @click="notify.alert('Session หมดอายุ กรุณา login ใหม่', 'warning', 'แจ้งเตือน')">
+          <el-button
+            type="warning"
+            @click="notify.alert('Session หมดอายุ กรุณา login ใหม่', 'warning', 'แจ้งเตือน')"
+          >
             Alert Warning
           </el-button>
-          <el-button type="danger" @click="notify.alert('ไม่มีสิทธิ์เข้าถึง', 'error', 'ข้อผิดพลาด')">
+          <el-button
+            type="danger"
+            @click="notify.alert('ไม่มีสิทธิ์เข้าถึง', 'error', 'ข้อผิดพลาด')"
+          >
             Alert Error
           </el-button>
         </div>
@@ -86,7 +109,11 @@
           <el-button type="primary" :loading="isLoading" @click="testLoading(2000, 'กำลังโหลด...')">
             Loading 2s
           </el-button>
-          <el-button type="primary" :loading="isLoading" @click="testLoading(4000, 'กำลังบันทึกข้อมูล...')">
+          <el-button
+            type="primary"
+            :loading="isLoading"
+            @click="testLoading(4000, 'กำลังบันทึกข้อมูล...')"
+          >
             Loading 4s (custom text)
           </el-button>
         </div>
@@ -114,12 +141,8 @@
           <el-button type="warning" @click="globalUi.showMessage('กรุณาตรวจสอบข้อมูล', 'warning')">
             Warning
           </el-button>
-          <el-button @click="globalUi.showMessage('ข้อมูล N/A', 'info')">
-            Info
-          </el-button>
-          <el-button plain @click="globalUi.hideMessage()">
-            Hide
-          </el-button>
+          <el-button @click="globalUi.showMessage('ข้อมูล N/A', 'info')"> Info </el-button>
+          <el-button plain @click="globalUi.hideMessage()"> Hide </el-button>
         </div>
       </div>
 
@@ -133,7 +156,10 @@
           <el-button type="danger" @click="globalUi.showAlert('เกิดข้อผิดพลาดร้ายแรง', 'error')">
             Alert Error
           </el-button>
-          <el-button type="warning" @click="globalUi.showAlert('คำเตือน: ข้อมูลไม่ครบถ้วน', 'warning')">
+          <el-button
+            type="warning"
+            @click="globalUi.showAlert('คำเตือน: ข้อมูลไม่ครบถ้วน', 'warning')"
+          >
             Alert Warning
           </el-button>
         </div>
@@ -143,11 +169,13 @@
       <div class="test-section">
         <h4 class="section-title">Confirm Modal <code>showConfirm()</code></h4>
         <div class="btn-row">
-          <el-button type="primary" @click="testGlobalConfirm">
-            Global Confirm
-          </el-button>
+          <el-button type="primary" @click="testGlobalConfirm"> Global Confirm </el-button>
         </div>
-        <div v-if="globalConfirmResult !== null" class="result-badge" :class="globalConfirmResult ? 'result-ok' : 'result-cancel'">
+        <div
+          v-if="globalConfirmResult !== null"
+          class="result-badge"
+          :class="globalConfirmResult ? 'result-ok' : 'result-cancel'"
+        >
           ผลลัพธ์: {{ globalConfirmResult ? '✅ ยืนยัน' : '❌ ยกเลิก' }}
         </div>
       </div>
@@ -156,9 +184,7 @@
       <div class="test-section">
         <h4 class="section-title">Full-screen Loading <code>showLoading()</code></h4>
         <div class="btn-row">
-          <el-button type="primary" @click="testGlobalLoading">
-            Loading 2s
-          </el-button>
+          <el-button type="primary" @click="testGlobalLoading"> Loading 2s </el-button>
         </div>
       </div>
     </div>
