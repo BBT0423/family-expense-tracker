@@ -1,13 +1,54 @@
-import type { ChangePasswordRequest, EnableMfaResponse, UserProfile, Result } from '@/types';
+import type {
+  ChangePasswordRequest,
+  CreateUserRequest,
+  EnableMfaResponse,
+  UpdateUserRequest,
+  UserDirectoryEntry,
+  UserProfile,
+  Result,
+} from '@/types';
 import { httpClient } from '@/utils/httpClient';
 
 export const userService = {
   /**
-   * GET /api/users
-   * Get all registered users (family members)
+   * GET /api/users (Admin only)
+   * Get all registered users in the system
    */
   async getAll() {
     return httpClient.get<Result<UserProfile[]>>('/api/users');
+  },
+
+  /**
+   * GET /api/users/directory
+   * Name + email only for every other user — open to any authenticated user,
+   * used to populate "who to view" / "who to send to" pickers.
+   */
+  async getDirectory() {
+    return httpClient.get<Result<UserDirectoryEntry[]>>('/api/users/directory');
+  },
+
+  /**
+   * POST /api/users (Admin only)
+   * Create a new user account
+   */
+  async create(payload: CreateUserRequest) {
+    return httpClient.post<Result<UserProfile>>('/api/users', payload);
+  },
+
+  /**
+   * PUT /api/users/{id} (Admin only)
+   * Update another user's name
+   */
+  async update(id: string, payload: UpdateUserRequest) {
+    return httpClient.put<Result<boolean>>(`/api/users/${id}`, payload);
+  },
+
+  /**
+   * PUT /api/users/{id}/role (Admin only)
+   * Promote/demote another user between "User" and "Admin"
+   */
+  async updateRole(id: string, role: 'Admin' | 'User') {
+    return httpClient.put<Result<boolean>>(`/api/users/${id}/role`, { role });
   },
 
   /**
@@ -16,6 +57,14 @@ export const userService = {
    */
   async enableMfa() {
     return httpClient.post<Result<EnableMfaResponse>>(`/api/user/mfa/enable`);
+  },
+
+  /**
+   * POST /api/user/mfa/confirm
+   * Confirm MFA setup with a code from the authenticator app; MFA is only active after this succeeds
+   */
+  async confirmMfa(code: string) {
+    return httpClient.post<Result<boolean>>(`/api/user/mfa/confirm`, { code });
   },
 
   /**

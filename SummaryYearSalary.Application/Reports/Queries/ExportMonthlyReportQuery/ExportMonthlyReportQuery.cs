@@ -4,4 +4,4 @@ using MediatR;
 
 namespace SummaryYearSalary.Application.Reports.Queries.ExportMonthlyReportQuery;
 
-public record ExportMonthlyReportQuery(string UserId, int Month, int Year) : IRequest<Result<byte[]>>;
+public record ExportMonthlyReportQuery(string UserId, int Month, int Year, string? ScopeUserId = null) : IRequest<Result<byte[]>>;

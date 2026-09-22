@@ -3,7 +3,6 @@ using System.Globalization;
 using SummaryYearSalary.Api.Helpers;
 using SummaryYearSalary.Api.Middlewares;
 using SummaryYearSalary.Application;
-using SummaryYearSalary.Application.Interfaces.IServices;
 using SummaryYearSalary.Domain.Common;
 using SummaryYearSalary.Domain.Entities;
 using SummaryYearSalary.Infrastructure;
@@ -119,7 +118,6 @@ public static partial class Program
                     var context = services.GetRequiredService<SummaryYearSalaryDbContext>();
                     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-                    var otpService = services.GetRequiredService<IOtpService>();
 
                     // Apply migrations
                     await context.Database.MigrateAsync();
@@ -131,7 +129,7 @@ public static partial class Program
                     await SeedRolesAsync(roleManager);
 
                     // Seed admin user
-                    await SeedAdminUserAsync(userManager, otpService);
+                    await SeedAdminUserAsync(userManager);
 
                     Log.Information("Database initialized successfully");
                 }
@@ -198,9 +196,9 @@ public static partial class Program
         }
     }
 
-    static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IOtpService otpService)
+    static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager)
     {
-        var adminEmail = "admin@innofinite.dev";
+        var adminEmail = "pongpan22120@gmail.com";
 
         if (await userManager.FindByEmailAsync(adminEmail) == null)
         {
@@ -211,9 +209,7 @@ public static partial class Program
                 Email = adminEmail,
                 FirstName = "Admin",
                 LastName = "User",
-                EmailConfirmed = true,
-                IsMfaEnabled = true,
-                MfaSecret = otpService.GenerateSecret()
+                EmailConfirmed = true
             };
 
             var result = await userManager.CreateAsync(adminUser, "Admin@123456");

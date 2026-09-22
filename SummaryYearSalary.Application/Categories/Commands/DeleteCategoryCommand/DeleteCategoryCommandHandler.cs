@@ -23,7 +23,7 @@ public class DeleteCategoryCommandHandler(
         if (category.IsDefault)
             return Result.Failure<bool>("ไม่สามารถลบหมวดหมู่เริ่มต้นได้");
 
-        if (category.UserId != request.UserId)
+        if (category.UserId != null && category.UserId != request.UserId)
             return Result.Failure<bool>("ไม่สามารถลบหมวดหมู่นี้ได้", 403);
 
         var hasTransactions = await _categoryRepository.HasTransactionsAsync(request.Id);

@@ -1,10 +1,7 @@
 using SummaryYearSalary.Api.Models.Budget;
-using SummaryYearSalary.Application.Common;
 using SummaryYearSalary.Application.Interfaces;
 using SummaryYearSalary.Application.Interfaces.IRepositories;
 using SummaryYearSalary.Domain.Entities;
-
-using MediatR;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +20,10 @@ public class BudgetsController(IBudgetRepository budgetRepository, IUnitOfWork u
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int? month, [FromQuery] int? year)
     {
+        var userId = GetCurrentUserId();
+
         var budgets = await _budgetRepository.GetByUserMonthYearAsync(
-            GetCurrentUserId(), month ?? 0, year ?? 0);
+            userId, month ?? 0, year ?? 0);
         return Ok(budgets.Select(b => new
         {
             b.Id, b.CategoryId, b.Month, b.Year, b.LimitAmount,
@@ -37,14 +36,16 @@ public class BudgetsController(IBudgetRepository budgetRepository, IUnitOfWork u
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Upsert([FromBody] UpsertBudgetRequest request)
     {
+        var userId = GetCurrentUserId();
+
         var existing = await _budgetRepository.GetByUserCategoryMonthYearAsync(
-            GetCurrentUserId(), request.CategoryId, request.Month, request.Year);
+            userId, request.CategoryId, request.Month, request.Year);
 
         if (existing is null)
         {
             var budget = new Budget
             {
-                UserId = GetCurrentUserId(),
+                UserId = userId,
                 CategoryId = request.CategoryId,
                 Month = request.Month,
                 Year = request.Year,

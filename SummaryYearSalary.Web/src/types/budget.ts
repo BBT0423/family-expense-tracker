@@ -1,14 +1,5 @@
 export type TransactionType = 'Income' | 'Expense';
 
-export interface FamilyMember {
-  id: number;
-  name: string;
-  color: string;
-  avatar?: string;
-  isActive: boolean;
-  createdAt: string;
-}
-
 export interface Category {
   id: number;
   name: string;
@@ -20,9 +11,6 @@ export interface Category {
 
 export interface Transaction {
   id: number;
-  memberId: number;
-  memberName: string;
-  memberColor: string;
   categoryId: number;
   categoryName: string;
   categoryIcon: string;
@@ -32,6 +20,8 @@ export interface Transaction {
   note?: string;
   transactionDate: string;
   createdAt: string;
+  createdByName?: string;
+  ownerName?: string;
 }
 
 export interface MonthlySummary {
@@ -65,19 +55,6 @@ export interface CategorySummary {
   categories: CategoryBreakdown[];
 }
 
-export interface MemberBreakdown {
-  memberId: number;
-  name: string;
-  color: string;
-  totalExpense: number;
-  totalIncome: number;
-  percentage: number;
-}
-
-export interface MemberSummary {
-  members: MemberBreakdown[];
-}
-
 export interface Budget {
   id: number;
   categoryId: number;
@@ -93,32 +70,18 @@ export interface TransactionFilter {
   year?: number;
   type?: TransactionType;
   categoryId?: number;
-  memberId?: number;
   searchTerm?: string;
   pageNumber?: number;
   pageSize?: number;
+  userId?: string;
 }
 
 export interface CreateTransactionRequest {
-  memberId: number;
   categoryId: number;
   type: TransactionType;
   amount: number;
   note?: string;
   transactionDate: string;
-}
-
-export interface CreateMemberRequest {
-  name: string;
-  color: string;
-  avatar?: string;
-}
-
-export interface UpdateMemberRequest {
-  name: string;
-  color: string;
-  avatar?: string;
-  isActive: boolean;
 }
 
 export interface CreateCategoryRequest {
@@ -129,7 +92,6 @@ export interface CreateCategoryRequest {
 }
 
 export interface BulkImportItem {
-  memberId: number;
   categoryId: number;
   type: TransactionType;
   amount: number;

@@ -10,7 +10,7 @@ namespace SummaryYearSalary.Application.Transactions.Commands.CreateTransactionC
 
 public record CreateTransactionCommand(
     string UserId,
-    int MemberId,
+    string CreatedByUserId,
     int CategoryId,
     TransactionType Type,
     decimal Amount,
@@ -21,9 +21,6 @@ public class CreateTransactionCommandValidator : AbstractValidator<CreateTransac
 {
     public CreateTransactionCommandValidator()
     {
-        RuleFor(x => x.MemberId)
-            .GreaterThan(0).WithMessage("กรุณาเลือกสมาชิก");
-
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("กรุณาเลือกหมวดหมู่");
 

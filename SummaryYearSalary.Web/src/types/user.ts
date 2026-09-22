@@ -10,15 +10,39 @@ interface EnableMfaResponse {
 
 interface UserProfile {
   id: string;
-  email: string;
-  userName: string;
   firstName: string;
   lastName: string;
-  roles: string[];
-  isMfaEnabled: boolean;
-  emailConfirmed: boolean;
+  email: string;
+  phoneNumber?: string;
   createdAt: string;
-  lastLogin?: string;
+  lastLoginAt?: string;
+  roles: string[];
 }
 
-export type { UpdateProfileRequest, EnableMfaResponse, UserProfile };
+interface CreateUserRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: 'Admin' | 'User';
+}
+
+interface UpdateUserRequest {
+  firstName: string;
+  lastName: string;
+}
+
+interface UserDirectoryEntry {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
+export type {
+  UpdateProfileRequest,
+  EnableMfaResponse,
+  UserProfile,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserDirectoryEntry,
+};

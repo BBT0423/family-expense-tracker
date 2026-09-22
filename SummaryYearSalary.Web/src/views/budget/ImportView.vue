@@ -78,7 +78,6 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="สมาชิก" prop="memberName" />
           <el-table-column label="หมวดหมู่" prop="categoryName" />
           <el-table-column label="จำนวนเงิน" prop="amount" align="right" width="110" />
           <el-table-column label="หมายเหตุ" prop="note" show-overflow-tooltip />
@@ -128,7 +127,6 @@ import { useRouter } from 'vue-router';
 import { UploadFilled } from '@element-plus/icons-vue';
 import * as XLSX from 'xlsx';
 import PageHeader from '@/components/admin/PageHeader.vue';
-import { useMemberStore } from '@/stores/memberStore';
 import { useCategoryStore } from '@/stores/categoryStore';
 import { useTransactionStore } from '@/stores/transactionStore';
 import { useNotify } from '@/composables/useNotify';
@@ -136,7 +134,6 @@ import type { BulkImportItem, TransactionType } from '@/types';
 import dayjs from 'dayjs';
 
 const router = useRouter();
-const memberStore = useMemberStore();
 const categoryStore = useCategoryStore();
 const transactionStore = useTransactionStore();
 const { toast } = useNotify();
@@ -152,16 +149,14 @@ const importedCount = ref(0);
 const mapping = ref<Record<string, string>>({
   transactionDate: '',
   type: '',
-  memberName: '',
   categoryName: '',
   amount: '',
   note: '',
 });
 
 const mappingFields = [
-  { key: 'transactionDate', label: 'วันที่ (DD/MM/YYYY)', required: true },
+  { key: 'transactionDate', label: 'วันที่ (DD/MM/YYYY ค.ศ. หรือ พ.ศ.)', required: true },
   { key: 'type', label: 'ประเภท (Income/Expense/รายรับ/รายจ่าย)', required: true },
-  { key: 'memberName', label: 'ชื่อสมาชิก', required: true },
   { key: 'categoryName', label: 'หมวดหมู่', required: true },
   { key: 'amount', label: 'จำนวนเงิน', required: true },
   { key: 'note', label: 'หมายเหตุ', required: false },
@@ -170,10 +165,9 @@ const mappingFields = [
 const templateRows = [
   { col: 'A', name: 'วันที่', required: true, example: '01/04/2026' },
   { col: 'B', name: 'ประเภท', required: true, example: 'รายจ่าย / Expense' },
-  { col: 'C', name: 'สมาชิก', required: true, example: 'พ่อ' },
-  { col: 'D', name: 'หมวดหมู่', required: true, example: 'อาหาร/เครื่องดื่ม' },
-  { col: 'E', name: 'จำนวนเงิน', required: true, example: '150.00' },
-  { col: 'F', name: 'หมายเหตุ', required: false, example: 'ข้าวเที่ยง' },
+  { col: 'C', name: 'หมวดหมู่', required: true, example: 'อาหาร/เครื่องดื่ม' },
+  { col: 'D', name: 'จำนวนเงิน', required: true, example: '150.00' },
+  { col: 'E', name: 'หมายเหตุ', required: false, example: 'ข้าวเที่ยง' },
 ];
 
 const validRows = computed(() => previewRows.value.filter((r) => r.valid).length);
@@ -193,7 +187,6 @@ function onFileChange(file: any) {
         const lh = h.toLowerCase();
         if (lh.includes('วันที่') || lh.includes('date')) mapping.value.transactionDate = h;
         if (lh.includes('ประเภท') || lh.includes('type')) mapping.value.type = h;
-        if (lh.includes('สมาชิก') || lh.includes('member')) mapping.value.memberName = h;
         if (lh.includes('หมวด') || lh.includes('category')) mapping.value.categoryName = h;
         if (lh.includes('จำนวน') || lh.includes('amount')) mapping.value.amount = h;
         if (lh.includes('หมาย') || lh.includes('note')) mapping.value.note = h;
@@ -205,13 +198,11 @@ function onFileChange(file: any) {
 }
 
 function buildPreview() {
-  const members = memberStore.members;
   const categories = categoryStore.categories;
 
   previewRows.value = parsedRows.value.map((row) => {
     const dateStr = row[mapping.value.transactionDate] ?? '';
     const typeStr = (row[mapping.value.type] ?? '').toLowerCase();
-    const memberName = row[mapping.value.memberName] ?? '';
     const categoryName = row[mapping.value.categoryName] ?? '';
     const amountStr = row[mapping.value.amount] ?? '';
     const note = row[mapping.value.note] ?? '';
@@ -219,21 +210,21 @@ function buildPreview() {
     const type: TransactionType =
       typeStr.includes('income') || typeStr.includes('รายรับ') ? 'Income' : 'Expense';
     const amount = parseFloat(amountStr.replace(/,/g, ''));
-    const member = members.find((m) => m.name === memberName);
     const category = categories.find((c) => c.name === categoryName);
 
-    const parsed = dayjs(dateStr, ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY']);
-    const valid = !!(member && category && !isNaN(amount) && amount > 0 && parsed.isValid());
+    const rawParsed = dayjs(dateStr, ['DD/MM/YYYY', 'YYYY-MM-DD', 'MM/DD/YYYY']);
+    // Excel from Thai users often carries Buddhist-era years (e.g. 16/09/2569)
+    const parsed =
+      rawParsed.isValid() && rawParsed.year() > 2400 ? rawParsed.subtract(543, 'year') : rawParsed;
+    const valid = !!(category && !isNaN(amount) && amount > 0 && parsed.isValid());
 
     return {
       transactionDate: parsed.isValid() ? parsed.format('YYYY-MM-DD') : dateStr,
       type,
-      memberName,
       categoryName,
       amount,
       note,
       valid,
-      memberId: member?.id,
       categoryId: category?.id,
     };
   });
@@ -244,13 +235,11 @@ function buildPreview() {
 async function handleImport() {
   importing.value = true;
   try {
-    await memberStore.fetchMembers();
     await categoryStore.fetchCategories();
 
     const items: BulkImportItem[] = previewRows.value
       .filter((r) => r.valid)
       .map((r) => ({
-        memberId: r.memberId,
         categoryId: r.categoryId,
         type: r.type,
         amount: r.amount,
@@ -280,7 +269,6 @@ function resetImport() {
   mapping.value = {
     transactionDate: '',
     type: '',
-    memberName: '',
     categoryName: '',
     amount: '',
     note: '',

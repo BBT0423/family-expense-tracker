@@ -16,10 +16,11 @@ public class SummaryYearSalaryDbContext : IdentityDbContext<ApplicationUser, Ide
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<FamilyMember> FamilyMembers => Set<FamilyMember>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<TransactionProposal> TransactionProposals => Set<TransactionProposal>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

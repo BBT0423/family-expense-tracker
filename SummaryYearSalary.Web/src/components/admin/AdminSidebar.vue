@@ -1,74 +1,115 @@
 <template>
-  <div class="sidebar-wrap" :class="{ 'is-collapsed': props.collapsed }">
-    <!-- Logo -->
-    <div class="sidebar-logo">
-      <el-icon size="26" class="logo-icon"><Wallet /></el-icon>
-      <span v-if="!props.collapsed" class="logo-text">Family Expense</span>
-    </div>
+  <aside :class="['sidebar', { open: props.open, collapsed: props.collapsed }]">
+    <button
+      class="sidebar-collapse-toggle"
+      type="button"
+      :aria-label="props.collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      @click="emit('toggle-sidebar')"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M15 6l-6 6 6 6"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
 
-    <!-- Nav: collapsed mode = custom icon buttons -->
-    <div v-if="props.collapsed" class="nav-collapsed">
-      <template v-for="section in menuSections" :key="section.title">
-        <el-tooltip
-          v-for="item in section.items"
-          :key="item.path"
-          :content="item.label"
-          placement="right"
-          :show-after="200"
-        >
-          <div
-            class="nav-icon-btn"
-            :class="{ active: isActive(item.path) }"
-            @click="navigate(item.path)"
-          >
-            <el-icon size="18"><component :is="item.icon" /></el-icon>
-          </div>
-        </el-tooltip>
-      </template>
-    </div>
-
-    <!-- Nav: expanded mode = el-menu -->
-    <el-scrollbar v-else class="sidebar-scrollbar">
-      <el-menu
-        :default-active="route.path"
-        router
-        :collapse-transition="false"
-        class="sidebar-menu"
+    <div class="sidebar-header">
+      <SidebarLogo />
+      <button
+        class="sidebar-close"
+        type="button"
+        aria-label="Close sidebar"
+        @click="emit('close-sidebar')"
       >
-        <template v-for="section in menuSections" :key="section.title">
-          <div class="menu-section-label">{{ section.title }}</div>
-          <el-menu-item
+        <el-icon size="20"><Close /></el-icon>
+      </button>
+    </div>
+
+    <div class="sidebar-content">
+      <nav class="nav-menu">
+        <SidebarSection v-for="section in menuSections" :key="section.title" :title="section.title">
+          <div
             v-for="item in section.items"
             :key="item.path"
-            :index="item.path"
-            @click="emit('close')"
+            @mouseenter="onNavHover(item, $event)"
+            @mouseleave="clearNavHover"
           >
-            <el-icon><component :is="item.icon" /></el-icon>
-            <template #title>{{ item.label }}</template>
-          </el-menu-item>
-        </template>
-      </el-menu>
-    </el-scrollbar>
-
-    <!-- Footer -->
-    <div class="sidebar-footer">
-      <el-icon v-if="props.collapsed" size="14"><InfoFilled /></el-icon>
-      <span v-else>v{{ appVersion }}</span>
+            <SidebarNavItem
+              :href="item.path"
+              :active="isActive(item.path)"
+              @click="emit('close-sidebar')"
+            >
+              <template #icon>
+                <el-icon size="18"><component :is="item.icon" /></el-icon>
+              </template>
+              {{ item.label }}
+              <span v-if="item.path === PROPOSALS_PATH && pendingCount > 0" class="nav-count">{{
+                pendingCount
+              }}</span>
+            </SidebarNavItem>
+          </div>
+        </SidebarSection>
+      </nav>
     </div>
-  </div>
+
+    <div class="sidebar-user-footer">
+      <SidebarUserMenu />
+    </div>
+    <div class="sidebar-version">v{{ appVersion }}</div>
+
+    <Teleport to="body">
+      <div
+        v-if="props.collapsed && hoverItem && hoverRect"
+        class="nav-tooltip"
+        :style="tooltipStyle"
+      >
+        {{ hoverItem.label }}
+      </div>
+    </Teleport>
+  </aside>
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router';
+import { computed, ref, watch, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useRoute } from 'vue-router';
+import { useProposalStore } from '@/stores/proposalStore';
 import { APP_VERSION } from '@/constants/version';
+import SidebarLogo from '@/components/admin/SidebarLogo.vue';
+import SidebarSection from '@/components/admin/SidebarSection.vue';
+import SidebarNavItem from '@/components/admin/SidebarNavItem.vue';
+import SidebarUserMenu from '@/components/admin/SidebarUserMenu.vue';
 
-const props = defineProps<{ collapsed?: boolean }>();
-const emit = defineEmits(['close']);
+const props = defineProps<{ open: boolean; collapsed?: boolean }>();
+const emit = defineEmits(['toggle-sidebar', 'close-sidebar']);
+
 const route = useRoute();
-const router = useRouter();
 const appVersion = APP_VERSION;
 
-const menuSections = [
+const PROPOSALS_PATH = '/pages/proposals';
+const proposalStore = useProposalStore();
+const { incoming } = storeToRefs(proposalStore);
+const pendingCount = computed(() => incoming.value.length);
+onMounted(() => proposalStore.fetchIncoming());
+// Refresh the badge whenever the user navigates (cheap, and keeps it current after accept/reject).
+watch(
+  () => route.path,
+  (path) => {
+    if (path !== PROPOSALS_PATH) proposalStore.fetchIncoming();
+  }
+);
+
+interface MenuItem {
+  path: string;
+  label: string;
+  icon: string;
+}
+
+const menuSections: { title: string; items: MenuItem[] }[] = [
   {
     title: 'OVERVIEW',
     items: [{ path: '/pages/dashboard', label: 'แดชบอร์ด', icon: 'DataLine' }],
@@ -78,12 +119,9 @@ const menuSections = [
     items: [
       { path: '/pages/transactions', label: 'รายการธุรกรรม', icon: 'List' },
       { path: '/pages/transactions/add', label: 'เพิ่มรายการ', icon: 'Plus' },
+      { path: '/pages/proposals', label: 'รายการรอยืนยัน', icon: 'Bell' },
       { path: '/pages/import', label: 'นำเข้าข้อมูล', icon: 'Upload' },
     ],
-  },
-  {
-    title: 'วิเคราะห์',
-    items: [{ path: '/pages/reports', label: 'รายงาน', icon: 'TrendCharts' }],
   },
   {
     title: 'จัดการ',
@@ -94,146 +132,37 @@ const menuSections = [
   },
 ];
 
-const isActive = (path: string) => route.path === path || route.path.startsWith(path + '/');
+// Longest matching path wins so /transactions/add doesn't also highlight /transactions.
+const allPaths = menuSections.flatMap((s) => s.items.map((i) => i.path));
+const activePath = computed(() => {
+  const matches = allPaths.filter((p) => route.path === p || route.path.startsWith(p + '/'));
+  return matches.sort((a, b) => b.length - a.length)[0];
+});
+const isActive = (path: string) => activePath.value === path;
 
-function navigate(path: string) {
-  router.push(path);
-  emit('close');
+// Collapsed-mode tooltip
+const hoverItem = ref<MenuItem | null>(null);
+const hoverRect = ref<DOMRect | null>(null);
+let clearHoverTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function onNavHover(item: MenuItem, event: MouseEvent) {
+  if (clearHoverTimeout) clearTimeout(clearHoverTimeout);
+  hoverItem.value = item;
+  hoverRect.value = (event.currentTarget as HTMLElement).getBoundingClientRect();
 }
+
+function clearNavHover() {
+  clearHoverTimeout = setTimeout(() => {
+    hoverItem.value = null;
+    hoverRect.value = null;
+  }, 80);
+}
+
+const tooltipStyle = computed(() => {
+  if (!hoverRect.value) return {};
+  return {
+    top: `${hoverRect.value.top + hoverRect.value.height / 2}px`,
+    left: `${hoverRect.value.right + 12}px`,
+  };
+});
 </script>
-
-<style scoped>
-.sidebar-wrap {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--sidebar-bg, #ffffff);
-}
-
-[data-theme='dark'] .sidebar-wrap {
-  background: #1e1e2e;
-}
-
-/* ── Logo ─────────────────────────────── */
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 16px;
-  height: 60px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  overflow: hidden;
-  transition: padding 0.25s ease;
-}
-
-.is-collapsed .sidebar-logo {
-  justify-content: center;
-  padding: 0;
-}
-
-.logo-icon {
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.logo-text {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-/* ── Collapsed nav (custom icon buttons) ─ */
-.nav-collapsed {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 0;
-  overflow-y: auto;
-}
-
-.nav-icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  margin: 2px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text);
-  transition: background 0.15s ease;
-  flex-shrink: 0;
-}
-
-.nav-icon-btn:hover:not(.active) {
-  background: rgba(0, 84, 233, 0.1);
-}
-
-.nav-icon-btn.active {
-  background: var(--primary);
-  color: #ffffff;
-}
-
-.nav-icon-btn.active :deep(.el-icon) {
-  color: #ffffff;
-}
-
-/* ── Expanded nav (el-menu) ───────────── */
-.sidebar-scrollbar {
-  flex: 1;
-  overflow: hidden;
-}
-
-:deep(.el-menu) {
-  --el-menu-bg-color: transparent;
-  background-color: transparent !important;
-  border-right: none !important;
-}
-
-:deep(.el-menu-item) {
-  height: 44px;
-  margin: 2px 8px;
-  border-radius: 8px;
-  width: calc(100% - 16px);
-  color: var(--text);
-}
-
-:deep(.el-menu-item.is-active) {
-  background: var(--primary) !important;
-  color: #ffffff !important;
-}
-
-:deep(.el-menu-item:hover:not(.is-active)) {
-  background: rgba(0, 84, 233, 0.08) !important;
-}
-
-.menu-section-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-light);
-  padding: 16px 20px 4px;
-  text-transform: uppercase;
-  opacity: 0.7;
-}
-
-/* ── Footer ──────────────────────────── */
-.sidebar-footer {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.is-collapsed .sidebar-footer {
-  justify-content: center;
-  padding: 10px;
-}
-</style>

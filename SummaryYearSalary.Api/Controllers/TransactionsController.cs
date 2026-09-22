@@ -29,14 +29,17 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] GetTransactionsRequest request)
     {
+        var userId = GetCurrentUserId();
+
         TransactionType? transactionType = null;
         if (!string.IsNullOrWhiteSpace(request.Type) && Enum.TryParse<TransactionType>(request.Type, true, out var parsed))
             transactionType = parsed;
 
         var query = new GetTransactionsQuery(
-            GetCurrentUserId(), request.Month ?? 0, request.Year ?? 0,
-            transactionType, request.CategoryId, request.MemberId,
-            request.SearchTerm, request.PageNumber ?? 1, request.PageSize ?? 20);
+            userId, request.Month ?? 0, request.Year ?? 0,
+            transactionType, request.CategoryId,
+            request.SearchTerm, request.PageNumber ?? 1, request.PageSize ?? 20,
+            request.UserId);
 
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Transactions Failed");
@@ -47,11 +50,13 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateTransactionRequest request)
     {
-        var command = _mapper.Map<CreateTransactionCommand>(request) with { UserId = GetCurrentUserId() };
+        var userId = GetCurrentUserId();
+
+        var command = _mapper.Map<CreateTransactionCommand>(request) with { UserId = userId, CreatedByUserId = userId };
         var result = await _mediator.Send(command);
         if (!result.IsSuccess)
         {
-            _logger.LogDebug("Create transaction failed for user {UserId}", GetCurrentUserId());
+            _logger.LogDebug("Create transaction failed for user {UserId}", userId);
             return ToProblem(result, "Create Transaction Failed");
         }
         return Ok(result);
@@ -62,7 +67,9 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTransactionRequest request)
     {
-        var command = _mapper.Map<UpdateTransactionCommand>(request) with { Id = id, UserId = GetCurrentUserId() };
+        var userId = GetCurrentUserId();
+
+        var command = _mapper.Map<UpdateTransactionCommand>(request) with { Id = id, UserId = userId };
         var result = await _mediator.Send(command);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Update Transaction Failed");
     }
@@ -72,7 +79,9 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        var command = new DeleteTransactionCommand(id, GetCurrentUserId());
+        var userId = GetCurrentUserId();
+
+        var command = new DeleteTransactionCommand(id, userId);
         var result = await _mediator.Send(command);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Delete Transaction Failed");
     }
@@ -82,12 +91,14 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> BulkImport([FromBody] BulkImportRequest request)
     {
+        var userId = GetCurrentUserId();
+
         var items = request.Items.Select(i => _mapper.Map<BulkImportItem>(i));
-        var command = new BulkImportTransactionsCommand(GetCurrentUserId(), items);
+        var command = new BulkImportTransactionsCommand(userId, items);
         var result = await _mediator.Send(command);
         if (!result.IsSuccess)
         {
-            _logger.LogDebug("Bulk import failed for user {UserId}", GetCurrentUserId());
+            _logger.LogDebug("Bulk import failed for user {UserId}", userId);
             return ToProblem(result, "Bulk Import Failed");
         }
         return Ok(new { ImportedCount = result.Value });

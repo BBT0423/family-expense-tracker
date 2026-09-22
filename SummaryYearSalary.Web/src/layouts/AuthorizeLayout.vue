@@ -10,6 +10,7 @@
 </template>
 
 <script lang="ts" setup>
+import '@/assets/ep-auth.css';
 import { STORAGE_THEME } from '@/constants/storage';
 import { SecureStorage } from '@/utils/storage';
 import { onMounted, provide, ref } from 'vue';
@@ -50,7 +51,7 @@ onMounted(() => {
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -108,17 +109,10 @@ onMounted(() => {
 }
 
 .auth-login-container {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  padding: 40px;
   width: 100%;
   max-width: 400px;
-  animation: slideUp 0.6s ease-out;
-  transition:
-    background-color 0.3s ease,
-    border-color 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 @keyframes slideUp {

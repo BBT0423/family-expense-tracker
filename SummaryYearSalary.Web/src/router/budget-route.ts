@@ -50,13 +50,13 @@ export const BudgetRoutes = [
     },
   },
   {
-    path: 'reports',
-    name: 'Reports',
-    component: () => import('@/views/budget/ReportsView.vue'),
+    path: 'proposals',
+    name: 'Proposals',
+    component: () => import('@/views/budget/ProposalsView.vue'),
     meta: {
-      title: 'รายงาน',
-      subtitle: 'วิเคราะห์และสรุปรายรับ-รายจ่าย',
-      breadcrumb: [{ name: 'รายงาน', url: null }],
+      title: 'รายการรอยืนยัน',
+      subtitle: 'รายการที่คนอื่นลงให้คุณ รอตรวจสอบและยอมรับ',
+      breadcrumb: [{ name: 'รายการรอยืนยัน', url: null }],
     },
   },
   {
@@ -75,7 +75,7 @@ export const BudgetRoutes = [
     component: () => import('@/views/budget/SettingsView.vue'),
     meta: {
       title: 'ตั้งค่า',
-      subtitle: 'จัดการสมาชิกและหมวดหมู่',
+      subtitle: 'จัดการหมวดหมู่',
       breadcrumb: [{ name: 'ตั้งค่า', url: null }],
     },
   },

@@ -28,11 +28,13 @@ public class CategoriesController(ISender mediator, IMapper mapper, IAppLogger l
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] string? type = null)
     {
+        var userId = GetCurrentUserId();
+
         TransactionType? transactionType = null;
         if (!string.IsNullOrWhiteSpace(type) && Enum.TryParse<TransactionType>(type, true, out var parsed))
             transactionType = parsed;
 
-        var query = new GetCategoriesQuery(GetCurrentUserId(), transactionType);
+        var query = new GetCategoriesQuery(userId, transactionType);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Categories Failed");
     }
@@ -42,11 +44,13 @@ public class CategoriesController(ISender mediator, IMapper mapper, IAppLogger l
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
     {
-        var command = _mapper.Map<CreateCategoryCommand>(request) with { UserId = GetCurrentUserId() };
+        var userId = GetCurrentUserId();
+
+        var command = _mapper.Map<CreateCategoryCommand>(request) with { UserId = userId };
         var result = await _mediator.Send(command);
         if (!result.IsSuccess)
         {
-            _logger.LogDebug("Create category failed for user {UserId}", GetCurrentUserId());
+            _logger.LogDebug("Create category failed for user {UserId}", userId);
             return ToProblem(result, "Create Category Failed");
         }
         return Ok(result);
@@ -57,7 +61,9 @@ public class CategoriesController(ISender mediator, IMapper mapper, IAppLogger l
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryRequest request)
     {
-        var command = _mapper.Map<UpdateCategoryCommand>(request) with { Id = id, UserId = GetCurrentUserId() };
+        var userId = GetCurrentUserId();
+
+        var command = _mapper.Map<UpdateCategoryCommand>(request) with { Id = id, UserId = userId };
         var result = await _mediator.Send(command);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Update Category Failed");
     }
@@ -68,7 +74,9 @@ public class CategoriesController(ISender mediator, IMapper mapper, IAppLogger l
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int id)
     {
-        var command = new DeleteCategoryCommand(id, GetCurrentUserId());
+        var userId = GetCurrentUserId();
+
+        var command = new DeleteCategoryCommand(id, userId);
         var result = await _mediator.Send(command);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Delete Category Failed");
     }

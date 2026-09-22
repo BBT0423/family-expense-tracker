@@ -2,9 +2,6 @@ namespace SummaryYearSalary.Application.Transactions.Responses;
 
 public record TransactionResponse(
     int Id,
-    int MemberId,
-    string MemberName,
-    string MemberColor,
     int CategoryId,
     string CategoryName,
     string CategoryIcon,
@@ -13,4 +10,6 @@ public record TransactionResponse(
     decimal Amount,
     string? Note,
     DateTime TransactionDate,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? CreatedByName = null,
+    string? OwnerName = null);

@@ -17,19 +17,12 @@
         <el-date-picker
           v-model="selectedDate"
           type="month"
-          format="MM/YYYY"
+          format="MMM BBBB"
           value-format="YYYY-MM"
           placeholder="เดือน/ปี"
-          style="width: 150px"
           @change="onDateChange"
         />
-        <el-select
-          v-model="filterType"
-          placeholder="ประเภท"
-          clearable
-          style="width: 120px"
-          @change="onFilterChange"
-        >
+        <el-select v-model="filterType" placeholder="ประเภท" clearable @change="onFilterChange">
           <el-option label="รายรับ" value="Income" />
           <el-option label="รายจ่าย" value="Expense" />
         </el-select>
@@ -37,7 +30,6 @@
           v-model="filterCategory"
           placeholder="หมวดหมู่"
           clearable
-          style="width: 160px"
           @change="onFilterChange"
         >
           <el-option
@@ -47,20 +39,10 @@
             :value="c.id"
           />
         </el-select>
-        <el-select
-          v-model="filterMember"
-          placeholder="สมาชิก"
-          clearable
-          style="width: 140px"
-          @change="onFilterChange"
-        >
-          <el-option v-for="m in memberStore.members" :key="m.id" :label="m.name" :value="m.id" />
-        </el-select>
         <el-input
           v-model="searchTerm"
           placeholder="ค้นหาหมายเหตุ..."
           clearable
-          style="width: 200px"
           @keyup.enter="onFilterChange"
           @clear="onFilterChange"
         >
@@ -74,7 +56,7 @@
     <!-- Table -->
     <el-card shadow="never">
       <el-table v-loading="transactionStore.loading" :data="transactionStore.transactions" stripe>
-        <el-table-column label="วันที่" width="100" sortable>
+        <el-table-column label="วันที่" width="130" sortable>
           <template #default="{ row }">{{ formatDate(row.transactionDate) }}</template>
         </el-table-column>
         <el-table-column label="ประเภท" width="90">
@@ -87,9 +69,11 @@
         <el-table-column label="หมวดหมู่">
           <template #default="{ row }">
             <span>{{ row.categoryIcon }} {{ row.categoryName }}</span>
+            <span v-if="row.createdByName" class="created-by-tag"
+              >(บันทึกโดย {{ row.createdByName }})</span
+            >
           </template>
         </el-table-column>
-        <el-table-column label="สมาชิก" prop="memberName" width="110" />
         <el-table-column label="หมายเหตุ" prop="note" show-overflow-tooltip />
         <el-table-column label="จำนวนเงิน" align="right" width="140">
           <template #default="{ row }">
@@ -98,21 +82,23 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="" width="100" fixed="right">
+        <el-table-column label="" width="96" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button
-              text
-              size="small"
-              :icon="Edit"
-              @click="router.push(`/pages/transactions/${row.id}/edit`)"
-            />
-            <el-button
-              text
-              size="small"
-              :icon="Delete"
-              type="danger"
-              @click="handleDelete(row.id)"
-            />
+            <div class="row-actions">
+              <el-button
+                text
+                size="small"
+                :icon="Edit"
+                @click="router.push(`/pages/transactions/${row.id}/edit`)"
+              />
+              <el-button
+                text
+                size="small"
+                :icon="Delete"
+                type="danger"
+                @click="handleDelete(row.id)"
+              />
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -131,12 +117,12 @@
 </template>
 
 <script setup lang="ts">
+import { formatThaiDate as formatDate } from '@/utils/formatters';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus, Download, Edit, Delete, Search } from '@element-plus/icons-vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
 import { useTransactionStore } from '@/stores/transactionStore';
-import { useMemberStore } from '@/stores/memberStore';
 import { useCategoryStore } from '@/stores/categoryStore';
 import { reportService } from '@/services/reportService';
 import { useNotify } from '@/composables/useNotify';
@@ -144,7 +130,6 @@ import type { TransactionType } from '@/types';
 
 const router = useRouter();
 const transactionStore = useTransactionStore();
-const memberStore = useMemberStore();
 const categoryStore = useCategoryStore();
 const { toast, confirm } = useNotify();
 
@@ -154,19 +139,10 @@ const currentMonth = ref(now.getMonth() + 1);
 const currentYear = ref(now.getFullYear());
 const filterType = ref<TransactionType | undefined>();
 const filterCategory = ref<number | undefined>();
-const filterMember = ref<number | undefined>();
 const searchTerm = ref('');
 const currentPage = ref(1);
 const pageSize = 20;
 const exporting = ref(false);
-
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('th-TH', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  });
-}
 
 function formatAmount(v: number) {
   return v.toLocaleString('th-TH', { minimumFractionDigits: 2 });
@@ -178,7 +154,6 @@ function getFilter() {
     year: currentYear.value,
     type: filterType.value,
     categoryId: filterCategory.value,
-    memberId: filterMember.value,
     searchTerm: searchTerm.value || undefined,
     pageNumber: currentPage.value,
     pageSize,
@@ -230,7 +205,6 @@ async function handleExport() {
 
 onMounted(async () => {
   await Promise.all([
-    memberStore.fetchMembers(),
     categoryStore.fetchCategories(),
     transactionStore.fetchTransactions(getFilter()),
   ]);
@@ -239,10 +213,13 @@ onMounted(async () => {
 
 <style scoped>
 .filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
   align-items: center;
+}
+.filter-row > * {
+  width: 100%;
 }
 .amount-text {
   font-weight: 600;
@@ -257,5 +234,10 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+.created-by-tag {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 </style>

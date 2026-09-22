@@ -19,8 +19,8 @@
             />
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color: #667eea; stop-opacity: 1" />
-                <stop offset="100%" style="stop-color: #764ba2; stop-opacity: 1" />
+                <stop offset="0%" style="stop-color: #0e7490; stop-opacity: 1" />
+                <stop offset="100%" style="stop-color: #0891b2; stop-opacity: 1" />
               </linearGradient>
             </defs>
           </svg>
@@ -32,8 +32,12 @@
       <transition name="fade-slide">
         <div v-if="moved" class="welcome-info">
           <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Loading SummaryYearSalary...</p>
+            <AppProgress
+              :model-value="loadPct"
+              :status="loadPct >= 100 ? 'success' : 'normal'"
+              label="กำลังโหลด SummaryYearSalary..."
+              style="width: 260px"
+            />
           </div>
         </div>
       </transition>
@@ -51,19 +55,35 @@
 import { getGreeting } from '@/utils/utilities';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import AppProgress from '@/components/AppProgress.vue';
 
 const router = useRouter();
 const moved = ref(false);
+const loadPct = ref(0);
 
-// Store timeout IDs for cleanup
-let animationTimeout: NodeJS.Timeout | null = null;
-let redirectTimeout: NodeJS.Timeout | null = null;
+let animationTimeout: ReturnType<typeof setTimeout> | null = null;
+let redirectTimeout: ReturnType<typeof setTimeout> | null = null;
+let progressInterval: ReturnType<typeof setInterval> | null = null;
+
+// Progress ticks from 0 → 100 over ~1400 ms (14 ticks × 100 ms)
+function startProgress() {
+  const totalMs = 1400;
+  const tickMs = 50;
+  const step = (tickMs / totalMs) * 100;
+  progressInterval = setInterval(() => {
+    loadPct.value = Math.min(100, loadPct.value + step);
+    if (loadPct.value >= 100 && progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+  }, tickMs);
+}
 
 onMounted(async () => {
   try {
-    // Trigger animations after component mount
     animationTimeout = setTimeout(() => {
       moved.value = true;
+      startProgress();
     }, 500);
 
     redirectTimeout = setTimeout(() => {
@@ -77,14 +97,10 @@ onMounted(async () => {
   }
 });
 
-// Cleanup timeouts when component is unmounted
 onUnmounted(() => {
-  if (animationTimeout) {
-    clearTimeout(animationTimeout);
-  }
-  if (redirectTimeout) {
-    clearTimeout(redirectTimeout);
-  }
+  if (animationTimeout) clearTimeout(animationTimeout);
+  if (redirectTimeout) clearTimeout(redirectTimeout);
+  if (progressInterval) clearInterval(progressInterval);
 });
 </script>
 
@@ -98,7 +114,7 @@ onUnmounted(() => {
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -202,44 +218,6 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.8rem;
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #ffffff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-text {
-  font-size: 0.9rem;
-  font-weight: 400;
-  margin: 0;
-  opacity: 0.8;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.8;
-  }
-
-  50% {
-    opacity: 1;
-  }
 }
 
 /* Features preview */

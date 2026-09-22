@@ -9,20 +9,16 @@ namespace SummaryYearSalary.Application.Transactions.Commands.BulkImportTransact
 
 public class BulkImportTransactionsCommandHandler(
     ITransactionRepository transactionRepository,
-    IFamilyMemberRepository memberRepository,
     ICategoryRepository categoryRepository,
     IUnitOfWork unitOfWork
 ) : IRequestHandler<BulkImportTransactionsCommand, Result<int>>
 {
     private readonly ITransactionRepository _transactionRepository = transactionRepository;
-    private readonly IFamilyMemberRepository _memberRepository = memberRepository;
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     public async Task<Result<int>> Handle(BulkImportTransactionsCommand request, CancellationToken cancellationToken)
     {
-        var members = (await _memberRepository.GetByUserIdAsync(request.UserId))
-            .ToDictionary(m => m.Id);
         var categories = (await _categoryRepository.GetByUserIdAsync(request.UserId))
             .ToDictionary(c => c.Id);
 
@@ -30,13 +26,13 @@ public class BulkImportTransactionsCommandHandler(
 
         foreach (var item in request.Items)
         {
-            if (!members.ContainsKey(item.MemberId) || !categories.ContainsKey(item.CategoryId))
+            if (!categories.ContainsKey(item.CategoryId))
                 continue;
 
             transactions.Add(new Transaction
             {
                 UserId = request.UserId,
-                MemberId = item.MemberId,
+                CreatedByUserId = request.UserId,
                 CategoryId = item.CategoryId,
                 Type = item.Type,
                 Amount = item.Amount,

@@ -1,3 +1,5 @@
+using System.Reflection;
+
 using SummaryYearSalary.Application.Interfaces;
 
 using FluentValidation;
@@ -21,7 +23,8 @@ public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? valid
 
         // Skip logging for Authorize namespace requests to avoid logging sensitive data
         var requestType = typeof(TRequest);
-        var shouldLog = !requestType.Namespace?.Contains("SummaryYearSalary.Application.Authorize", StringComparison.OrdinalIgnoreCase) ?? true;
+        var shouldLog = (!requestType.Namespace?.Contains("SummaryYearSalary.Application.Authorize", StringComparison.OrdinalIgnoreCase) ?? true)
+            && requestType.GetCustomAttribute<SensitiveRequestAttribute>() is null;
         
         if (shouldLog)
         {

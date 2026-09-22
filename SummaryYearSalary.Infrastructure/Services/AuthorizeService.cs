@@ -90,10 +90,39 @@ public class AuthorizeService(
 
         var mfaSecret = _otpService.GenerateSecret();
         var mfaAuthenticatorUrl = _otpService.GenerateQrCodeUri(user.Email ?? string.Empty, mfaSecret, _jwtSettings.Audience);
+        // The secret is only stored here; MFA is switched on by ConfirmMfaAsync once the user proves
+        // their authenticator app works. Otherwise abandoning setup would lock them out of login.
         user.MfaSecret = mfaSecret;
-        user.IsMfaEnabled = true;
         await _userManager.UpdateAsync(user);
         return Result.Success(new EnableMfaResponse(mfaSecret, mfaAuthenticatorUrl));
+    }
+
+    public async Task<Result<bool>> ConfirmMfaAsync(string userId, string code, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Result.Failure<bool>("User not found.");
+        }
+
+        if (user.IsMfaEnabled)
+        {
+            return Result.Failure<bool>("MFA is already enabled for this user.");
+        }
+
+        if (string.IsNullOrEmpty(user.MfaSecret))
+        {
+            return Result.Failure<bool>("MFA setup has not been started.");
+        }
+
+        if (!_otpService.VerifyTotp(user.MfaSecret, code))
+        {
+            return Result.Failure<bool>("Invalid verification code.");
+        }
+
+        user.IsMfaEnabled = true;
+        await _userManager.UpdateAsync(user);
+        return Result.Success(true);
     }
 
     public async Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordCommand request, CancellationToken cancellationToken)
@@ -154,7 +183,7 @@ public class AuthorizeService(
         user.LastLoginAt = DateTimeProvider.GetBangkokTimeZone();
         await _userManager.UpdateAsync(user);
 
-        var metadata = BuildMetadata(user);
+        var metadata = await BuildMetadata(user);
 
         if (user.IsMfaEnabled)
         {
@@ -192,7 +221,7 @@ public class AuthorizeService(
         var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(token.User!);
         await _refreshTokenRepository.UpdateAsync(newRefreshToken);
 
-        var metadata = BuildMetadata(token.User!);
+        var metadata = await BuildMetadata(token.User!);
 
         return Result.Success(new AuthorizeResponse(
             accessToken,
@@ -277,7 +306,7 @@ public class AuthorizeService(
             refreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
-            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, BuildMetadata(user))
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, await BuildMetadata(user))
         ));
     }
 
@@ -318,7 +347,7 @@ public class AuthorizeService(
             refreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
-            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, BuildMetadata(user))
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, await BuildMetadata(user))
         ));
     }
 
@@ -412,7 +441,7 @@ public class AuthorizeService(
             refreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
-            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, BuildMetadata(user))
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, await BuildMetadata(user))
         ));
     }
 
@@ -439,11 +468,11 @@ public class AuthorizeService(
             refreshToken.Token,
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
-            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, BuildMetadata(user))
+            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, await BuildMetadata(user))
         ));
     }
 
-    private static Dictionary<string, object> BuildMetadata(ApplicationUser user) => new()
+    private async Task<Dictionary<string, object>> BuildMetadata(ApplicationUser user) => new()
     {
         { "userId", user.Id ?? string.Empty },
         { "firstName", user.FirstName ?? string.Empty },
@@ -452,6 +481,7 @@ public class AuthorizeService(
         { "isMfaEnabled", user.IsMfaEnabled },
         { "emailConfirmed", user.EmailConfirmed },
         { "createdAt", user.CreatedAt.ToString("o") },
-        { "lastLogin", user.LastLoginAt?.ToString("o") ?? string.Empty }
+        { "lastLogin", user.LastLoginAt?.ToString("o") ?? string.Empty },
+        { "roles", await _userManager.GetRolesAsync(user) }
     };
 }

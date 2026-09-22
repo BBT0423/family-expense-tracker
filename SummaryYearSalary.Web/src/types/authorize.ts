@@ -19,7 +19,7 @@ export interface LoginResponse {
     email: string;
     name: string;
     avatar: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, any> & { roles?: string[] };
     loginProvider?: LoginProvider;
   };
 }
@@ -39,7 +39,7 @@ export interface VerifyMfaResponse {
     email: string;
     name: string;
     avatar: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, any> & { roles?: string[] };
     loginProvider?: LoginProvider;
   };
 }

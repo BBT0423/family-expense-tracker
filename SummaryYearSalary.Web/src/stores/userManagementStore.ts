@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { userService } from '@/services/userService';
-import type { UserProfile } from '@/types';
+import type { CreateUserRequest, UpdateUserRequest, UserProfile } from '@/types';
 
 export const useUserManagementStore = defineStore('userManagement', () => {
   const users = ref<UserProfile[]>([]);
@@ -19,5 +19,23 @@ export const useUserManagementStore = defineStore('userManagement', () => {
     }
   }
 
-  return { users, loading, fetchUsers };
+  async function createUser(payload: CreateUserRequest) {
+    const { data } = await userService.create(payload);
+    if (data?.isSuccess) await fetchUsers();
+    return data;
+  }
+
+  async function updateUser(id: string, payload: UpdateUserRequest) {
+    const { data } = await userService.update(id, payload);
+    if (data?.isSuccess) await fetchUsers();
+    return data;
+  }
+
+  async function updateUserRole(id: string, role: 'Admin' | 'User') {
+    const { data } = await userService.updateRole(id, role);
+    if (data?.isSuccess) await fetchUsers();
+    return data;
+  }
+
+  return { users, loading, fetchUsers, createUser, updateUser, updateUserRole };
 });

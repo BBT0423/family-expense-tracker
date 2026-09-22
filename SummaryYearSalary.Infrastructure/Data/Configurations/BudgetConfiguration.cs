@@ -1,5 +1,4 @@
 using SummaryYearSalary.Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,8 +10,8 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
     {
         builder.ToTable("Budgets");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.UserId).IsRequired().HasMaxLength(450);
         builder.Property(e => e.LimitAmount).HasPrecision(18, 2);
+        builder.Property(e => e.UserId).IsRequired().HasMaxLength(450);
         builder.HasIndex(e => new { e.UserId, e.CategoryId, e.Month, e.Year }).IsUnique();
 
         builder.HasOne(e => e.Category)

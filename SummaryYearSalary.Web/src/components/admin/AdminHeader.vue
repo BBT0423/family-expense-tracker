@@ -1,18 +1,20 @@
 <template>
-  <div class="header-inner">
-    <!-- Left: Toggle + Page Title -->
+  <header class="header">
     <div class="header-left">
-      <el-button text circle class="toggle-btn" @click="$emit('toggle')">
-        <el-icon size="20">
-          <Expand v-if="props.collapsed" />
-          <Fold v-else />
-        </el-icon>
-      </el-button>
-
-      <span v-if="pageTitle" class="header-page-title">{{ pageTitle }}</span>
+      <button
+        type="button"
+        class="menu-btn"
+        aria-label="Open menu"
+        @click="$emit('toggle-sidebar')"
+      >
+        <el-icon size="20"><Menu /></el-icon>
+      </button>
+      <nav class="header-crumb" aria-label="Breadcrumb">
+        Family Expense
+        <span v-if="pageTitle" class="header-crumb-current">/ {{ pageTitle }}</span>
+      </nav>
     </div>
 
-    <!-- Right: Theme + User -->
     <div class="header-right">
       <!-- Theme toggle -->
       <el-tooltip :content="isDark ? 'Light mode' : 'Dark mode'" placement="bottom">
@@ -24,178 +26,178 @@
         </el-button>
       </el-tooltip>
 
-      <!-- User dropdown -->
-      <el-dropdown trigger="click" @command="handleCommand">
-        <div class="user-trigger">
-          <el-avatar :size="32" class="user-avatar">{{ initials }}</el-avatar>
-          <span class="user-name">{{ displayName }}</span>
-          <el-icon size="12" class="text-muted"><ArrowDown /></el-icon>
-        </div>
+      <!-- Notification bell -->
+      <el-dropdown trigger="click" placement="bottom-end" @visible-change="onNotifToggle">
+        <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="9" class="notif-badge">
+          <el-button text circle>
+            <el-icon size="18"><Bell /></el-icon>
+          </el-button>
+        </el-badge>
         <template #dropdown>
-          <el-dropdown-menu>
-            <div class="dropdown-user-info">
-              <div class="dropdown-name">{{ user?.name || 'User' }}</div>
-              <div class="dropdown-email">{{ user?.email }}</div>
+          <div class="notif-panel">
+            <div class="notif-panel-header">
+              <span>การแจ้งเตือน</span>
+              <el-button
+                v-if="unreadCount > 0"
+                text
+                size="small"
+                type="primary"
+                @click.stop="handleMarkAllRead"
+              >
+                อ่านทั้งหมด
+              </el-button>
             </div>
-            <el-dropdown-item command="profile">
-              <el-icon><UserFilled /></el-icon>
-              Profile
-            </el-dropdown-item>
-            <el-dropdown-item command="password">
-              <el-icon><Lock /></el-icon>
-              Change Password
-            </el-dropdown-item>
-            <el-dropdown-item divided command="logout" class="logout-item">
-              <el-icon><SwitchButton /></el-icon>
-              Sign Out
-            </el-dropdown-item>
-          </el-dropdown-menu>
+            <div class="notif-list">
+              <div v-if="notificationStore.loading" class="notif-empty">กำลังโหลด...</div>
+              <div v-else-if="notifications.length === 0" class="notif-empty">
+                ไม่มีการแจ้งเตือน
+              </div>
+              <div
+                v-for="n in notifications"
+                :key="n.id"
+                class="notif-item"
+                :class="{ unread: !n.isRead }"
+                @click="handleNotificationClick(n)"
+              >
+                <div class="notif-title">{{ n.title }}</div>
+                <div class="notif-message">{{ n.message }}</div>
+                <div class="notif-time">{{ formatDateTime(n.createdAt) }}</div>
+              </div>
+            </div>
+          </div>
         </template>
       </el-dropdown>
     </div>
-  </div>
+  </header>
 
   <NetworkStatusBanner />
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, inject, onMounted, onUnmounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/authStore';
+import type { NotificationItem } from '@/types';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { formatDateTime } from '@/utils/formatters';
 
-const props = defineProps<{ collapsed?: boolean }>();
-defineEmits(['toggle']);
+defineEmits(['toggle-sidebar']);
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
-const { user } = authStore;
+
+const notificationStore = useNotificationStore();
+const { notifications, unreadCount } = storeToRefs(notificationStore);
+
+let pollHandle: ReturnType<typeof setInterval> | undefined;
+
+onMounted(() => {
+  notificationStore.fetchUnreadCount();
+  pollHandle = setInterval(() => notificationStore.fetchUnreadCount(), 45000);
+});
+
+onUnmounted(() => {
+  if (pollHandle) clearInterval(pollHandle);
+});
+
+function onNotifToggle(visible: boolean) {
+  if (visible) notificationStore.fetchNotifications();
+}
+
+function handleNotificationClick(n: NotificationItem) {
+  notificationStore.markRead(n.id);
+  if (n.type === 'TransactionProposed') router.push('/pages/proposals');
+}
+
+function handleMarkAllRead() {
+  notificationStore.markAllRead();
+}
 
 const isDark = inject<{ value: boolean }>('isDark');
 const toggleTheme = inject<() => void>('toggleTheme', () => {});
 
 const pageTitle = computed(() => route.meta?.title as string | undefined);
-
-const initials = computed(() => {
-  const name = user?.name || user?.email || '';
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('');
-});
-
-const displayName = computed(() => {
-  const name = user?.name || '';
-  return name.length > 20 ? name.slice(0, 20) + '…' : name || user?.email || 'User';
-});
-
-function handleCommand(cmd: string) {
-  if (cmd === 'profile') router.push('/pages/users/profile');
-  else if (cmd === 'password') router.push('/authorize/change-password');
-  else if (cmd === 'logout') {
-    authStore.clearAuth();
-    router.push('/authorize/login');
-  }
-}
 </script>
 
 <style scoped>
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 16px;
-  height: 60px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toggle-btn {
-  color: var(--text);
-}
-
-.header-page-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
+.header-crumb {
+  font-size: 13px;
+  color: var(--text-muted);
   white-space: nowrap;
+}
+
+.header-crumb-current {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .header-right {
-  display: flex;
-  align-items: center;
   gap: 4px;
 }
 
-/* User trigger */
-.user-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background 0.15s;
+/* Notification bell */
+.notif-badge {
+  display: inline-flex;
 }
 
-.user-trigger:hover {
+.notif-panel {
+  width: 320px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.notif-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.notif-list {
+  overflow-y: auto;
+}
+
+.notif-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.notif-item:hover {
   background: var(--surface-dark);
 }
 
-.user-avatar {
-  background: var(--primary) !important;
-  color: #fff !important;
-  font-size: 0.8rem;
-  font-weight: 700;
-  flex-shrink: 0;
+.notif-item.unread {
+  background: var(--active-nav-bg);
 }
 
-.user-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text);
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media (max-width: 640px) {
-  .user-name {
-    display: none;
-  }
-}
-
-/* Dropdown user info header */
-.dropdown-user-info {
-  padding: 10px 16px 8px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-
-.dropdown-name {
+.notif-title {
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 0.875rem;
   color: var(--text);
 }
 
-.dropdown-email {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+.notif-message {
+  font-size: 0.8rem;
+  color: var(--text-light);
   margin-top: 2px;
 }
 
-:deep(.logout-item) {
-  color: var(--danger) !important;
-}
-
-:deep(.logout-item .el-icon) {
-  color: var(--danger) !important;
+.notif-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
 </style>

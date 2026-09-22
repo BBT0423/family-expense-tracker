@@ -16,7 +16,7 @@
           <el-date-picker
             v-model="form.transactionDate"
             type="date"
-            format="DD/MM/YYYY"
+            format="DD/MMM/BBBB"
             value-format="YYYY-MM-DD"
             placeholder="เลือกวันที่"
             style="width: 100%"
@@ -27,6 +27,7 @@
         <el-form-item label="จำนวนเงิน (฿)" required>
           <el-input
             v-model="amountDisplay"
+            class="amount-input"
             placeholder="0.00"
             style="width: 100%; text-align: right"
             inputmode="decimal"
@@ -38,6 +39,42 @@
           </el-input>
         </el-form-item>
 
+        <el-form-item v-if="!isEdit" label="ลงให้คนอื่น">
+          <el-switch v-model="forOther" active-text="ส่งให้เจ้าของยืนยัน" />
+        </el-form-item>
+
+        <el-form-item v-if="forOther" label="อีเมลผู้รับ" required>
+          <el-select
+            v-model="recipientEmails"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="เลือกหรือพิมพ์อีเมลผู้รับ (ใส่ได้หลายคน)"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="u in userDirectoryStore.entries"
+              :key="u.id"
+              :label="`${u.displayName} (${u.email})`"
+              :value="u.email"
+            />
+          </el-select>
+          <div v-if="recipientHints.length" class="recipient-hint">
+            <div
+              v-for="hint in recipientHints"
+              :key="hint.email"
+              :class="hint.found ? 'recipient-ok' : ''"
+            >
+              {{ hint.email }}:
+              {{
+                hint.found ? `ส่งถึง ${hint.name}` : 'ไม่พบในระบบ (ยังส่งได้ ตรวจสอบอีเมลอีกครั้ง)'
+              }}
+            </div>
+          </div>
+          <div v-else class="recipient-hint">เจ้าของจะได้รับแจ้งเตือนให้ยืนยันรายการ</div>
+        </el-form-item>
+
         <el-form-item label="หมวดหมู่" required>
           <el-select
             v-model="form.categoryId"
@@ -46,20 +83,11 @@
             filterable
           >
             <el-option
-              v-for="c in filteredCategories"
+              v-for="c in activeCategories"
               :key="c.id"
               :label="`${c.icon} ${c.name}`"
               :value="c.id"
             />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="สมาชิก" required>
-          <el-select v-model="form.memberId" placeholder="เลือกสมาชิก" style="width: 100%">
-            <el-option v-for="m in memberStore.members" :key="m.id" :label="m.name" :value="m.id">
-              <span class="member-dot" :style="{ background: m.color }" />
-              {{ m.name }}
-            </el-option>
           </el-select>
         </el-form-item>
 
@@ -77,7 +105,7 @@
         <div class="form-actions">
           <el-button @click="router.back()">ยกเลิก</el-button>
           <el-button type="primary" native-type="submit" :loading="saving">
-            {{ isEdit ? 'บันทึกการแก้ไข' : 'เพิ่มรายการ' }}
+            {{ submitLabel }}
           </el-button>
         </div>
       </el-form>
@@ -89,19 +117,50 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import PageHeader from '@/components/admin/PageHeader.vue';
-import { useMemberStore } from '@/stores/memberStore';
 import { useCategoryStore } from '@/stores/categoryStore';
 import { useTransactionStore } from '@/stores/transactionStore';
+import { useUserDirectoryStore } from '@/stores/userDirectoryStore';
+import { proposalService } from '@/services/proposalService';
+import { toProblemDetails } from '@/utils/utilities';
 import { useNotify } from '@/composables/useNotify';
-import type { TransactionType } from '@/types';
+import type { TransactionType, CreateTransactionRequest } from '@/types';
 import dayjs from 'dayjs';
 
 const router = useRouter();
 const route = useRoute();
-const memberStore = useMemberStore();
 const categoryStore = useCategoryStore();
 const transactionStore = useTransactionStore();
+const userDirectoryStore = useUserDirectoryStore();
 const { toast } = useNotify();
+
+// ---- Log for someone else (owner must accept) ----
+const forOther = ref(false);
+const recipientEmails = ref<string[]>([]);
+
+// el-select's allow-create doesn't dedupe: typing/selecting the same email
+// twice appends it twice, which renders as one garbled, overlapping tag.
+watch(recipientEmails, (val) => {
+  const unique = [...new Set(val.map((e) => e.trim()).filter(Boolean))];
+  if (unique.length !== val.length || unique.some((e, i) => e !== val[i])) {
+    recipientEmails.value = unique;
+  }
+});
+
+// Matches each entered email against the directory purely client-side (no
+// extra API round trip per keystroke) — just a hint, the real check happens
+// server-side per recipient on submit.
+const recipientHints = computed(() =>
+  recipientEmails.value.map((email) => {
+    const match = userDirectoryStore.entries.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase()
+    );
+    return { email, found: !!match, name: match?.displayName ?? '' };
+  })
+);
+
+watch(forOther, () => {
+  form.value.categoryId = undefined;
+});
 
 const isEdit = computed(() => !!route.params.id);
 const saving = ref(false);
@@ -157,7 +216,6 @@ const form = ref<{
   transactionDate: string;
   amount: number;
   categoryId?: number;
-  memberId?: number;
   note?: string;
 }>({
   type: 'Expense',
@@ -171,25 +229,92 @@ watch(
   (val) => {
     amountDisplay.value = toFormatted(val);
   },
-  { immediate: true },
+  { immediate: true }
 );
 
-const filteredCategories = computed(() => categoryStore.filterByType(form.value.type));
+// Someone else's account can only be given the built-in categories (yours are private).
+const activeCategories = computed(() =>
+  forOther.value
+    ? categoryStore.filterByType(form.value.type).filter((c) => c.isDefault)
+    : categoryStore.filterByType(form.value.type)
+);
+const submitLabel = computed(() => {
+  if (isEdit.value) return 'บันทึกการแก้ไข';
+  return forOther.value ? 'ส่งให้ยืนยัน' : 'เพิ่มรายการ';
+});
+
+async function submitProposal() {
+  if (!form.value.categoryId || form.value.amount <= 0 || recipientEmails.value.length === 0) {
+    toast('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+    return;
+  }
+  saving.value = true;
+  const succeeded: string[] = [];
+  const failed: { email: string; reason: string }[] = [];
+  try {
+    for (const email of recipientEmails.value) {
+      try {
+        const { data } = await proposalService.create({
+          recipientEmail: email,
+          type: form.value.type,
+          transactionDate: form.value.transactionDate,
+          amount: form.value.amount,
+          categoryId: form.value.categoryId,
+          note: form.value.note,
+        });
+        if (data?.isSuccess) {
+          succeeded.push(email);
+        } else {
+          failed.push({ email, reason: data?.error ?? 'เกิดข้อผิดพลาด' });
+        }
+      } catch (e) {
+        failed.push({ email, reason: toProblemDetails(e).detail });
+      }
+    }
+
+    // Only clear out the recipients that actually went through, so a mistyped
+    // email among several can be fixed and resent without redoing the rest.
+    recipientEmails.value = recipientEmails.value.filter((e) => !succeeded.includes(e));
+
+    if (failed.length === 0) {
+      toast(
+        succeeded.length > 1
+          ? `ส่งให้เจ้าของยืนยันแล้ว ${succeeded.length} คน`
+          : 'ส่งให้เจ้าของยืนยันแล้ว',
+        'success'
+      );
+      router.push('/pages/transactions');
+    } else {
+      const summary = failed.map((f) => `${f.email}: ${f.reason}`).join('\n');
+      if (succeeded.length > 0) {
+        toast(
+          `ส่งสำเร็จ ${succeeded.length} คน แต่พลาด ${failed.length} คน — ${summary}`,
+          'warning'
+        );
+      } else {
+        toast(summary, 'error');
+      }
+    }
+  } finally {
+    saving.value = false;
+  }
+}
 
 async function handleSubmit() {
-  if (!form.value.categoryId || !form.value.memberId || form.value.amount <= 0) {
+  if (forOther.value && !isEdit.value) return submitProposal();
+
+  if (!form.value.categoryId || form.value.amount <= 0) {
     toast('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
     return;
   }
 
   saving.value = true;
   try {
-    const payload = {
+    const payload: CreateTransactionRequest = {
       type: form.value.type,
       transactionDate: form.value.transactionDate,
       amount: form.value.amount,
       categoryId: form.value.categoryId!,
-      memberId: form.value.memberId!,
       note: form.value.note,
     };
 
@@ -212,7 +337,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await Promise.all([memberStore.fetchMembers(), categoryStore.fetchCategories()]);
+  await Promise.all([categoryStore.fetchCategories(), userDirectoryStore.fetchDirectory()]);
 
   if (isEdit.value) {
     // Pre-fill from existing transaction in store (or refetch)
@@ -223,7 +348,6 @@ onMounted(async () => {
         transactionDate: dayjs(existing.transactionDate).format('YYYY-MM-DD'),
         amount: existing.amount,
         categoryId: existing.categoryId,
-        memberId: existing.memberId,
         note: existing.note,
       };
     }
@@ -238,19 +362,27 @@ onMounted(async () => {
   gap: 10px;
   margin-top: 8px;
 }
-.member-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 6px;
+.recipient-ok {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--el-color-success);
+}
+.recipient-error {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--el-color-danger);
+}
+.recipient-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 :deep(.el-input-group__prepend) {
   background-color: var(--el-fill-color-light);
 }
 
-:deep(.el-input__inner) {
+.amount-input :deep(.el-input__inner) {
   text-align: right;
 }
 </style>

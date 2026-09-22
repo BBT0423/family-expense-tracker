@@ -13,8 +13,10 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdminHeader: typeof import('./components/admin/AdminHeader.vue')['default']
     AdminSidebar: typeof import('./components/admin/AdminSidebar.vue')['default']
+    AppProgress: typeof import('./components/AppProgress.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
+    ElBadge: typeof import('element-plus/es')['ElBadge']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCard: typeof import('element-plus/es')['ElCard']
     ElContainer: typeof import('element-plus/es')['ElContainer']
@@ -66,6 +68,11 @@ declare module 'vue' {
     ProModal: typeof import('./components/common/ProModal.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScopeSelector: typeof import('./components/common/ScopeSelector.vue')['default']
+    SidebarLogo: typeof import('./components/admin/SidebarLogo.vue')['default']
+    SidebarNavItem: typeof import('./components/admin/SidebarNavItem.vue')['default']
+    SidebarSection: typeof import('./components/admin/SidebarSection.vue')['default']
+    SidebarUserMenu: typeof import('./components/admin/SidebarUserMenu.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

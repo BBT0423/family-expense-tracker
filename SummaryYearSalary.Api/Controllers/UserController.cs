@@ -2,6 +2,7 @@ using SummaryYearSalary.Api.Helpers;
 using SummaryYearSalary.Api.Models.User;
 using SummaryYearSalary.Application.Interfaces;
 using SummaryYearSalary.Application.User.Commands.ChangePasswordCommand;
+using SummaryYearSalary.Application.User.Commands.ConfirmMfaCommand;
 using SummaryYearSalary.Application.User.Commands.EnableMfaCommand;
 
 using MapsterMapper;
@@ -47,6 +48,27 @@ public class UserController(ISender mediator, IMapper mapper, IAppLogger logger)
         return Ok(result);
     }
 
+
+    /// <summary>
+    /// Confirm MFA setup with a code from the user's authenticator app; MFA only becomes active after this succeeds.
+    /// </summary>
+    [HttpPost("mfa/confirm")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ConfirmMfa([FromBody] ConfirmMfaRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
+        var result = await _mediator.Send(new ConfirmMfaCommand(userId, request.Code, ipAddress));
+
+        if (!result.IsSuccess)
+        {
+            _logger.LogDebug("Confirm MFA failed for user {UserId} from {IpAddress}", userId, ipAddress);
+            return ToProblem(result, "Confirm MFA Failed");
+        }
+
+        return Ok(result);
+    }
 
     /// <summary>
     /// Change password for the current user.

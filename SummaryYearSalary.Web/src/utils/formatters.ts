@@ -1,3 +1,9 @@
+import dayjs from 'dayjs';
+import buddhistEra from 'dayjs/plugin/buddhistEra';
+import 'dayjs/locale/th';
+
+dayjs.extend(buddhistEra);
+
 /**
  * Utility functions for formatting currency and dates
  * Supports both Thai and English locales
@@ -47,13 +53,8 @@ export const formatDate = (dateString: string, options?: Intl.DateTimeFormatOpti
  * @returns Formatted date and time string
  */
 export const formatDateTime = (dateString: string): string => {
-  return formatDate(dateString, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const d = dayjs(dateString);
+  return d.isValid() ? d.locale('th').format('DD/MMM/BBBB HH:mm') : '-';
 };
 
 /**
@@ -247,4 +248,20 @@ export const formatDateForApi = (date: Date | string | null | undefined): string
   const day = String(dateObj.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+/**
+ * Thai short date in Buddhist Era — DD/MMM/BBBB (e.g. 16/ก.ย./2569)
+ */
+export const formatThaiDate = (value?: string | Date | null): string => {
+  if (!value || (typeof value === 'string' && value.startsWith('0001-01-01'))) return '-';
+  const d = dayjs(value);
+  return d.isValid() ? d.locale('th').format('DD/MMM/BBBB') : '-';
+};
+
+/** Thai month + Buddhist year — MMM BBBB (e.g. ก.ย. 2569) */
+export const formatThaiMonth = (value?: string | Date | null): string => {
+  if (!value) return '-';
+  const d = dayjs(value);
+  return d.isValid() ? d.locale('th').format('MMM BBBB') : '-';
 };

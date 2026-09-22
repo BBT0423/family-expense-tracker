@@ -12,7 +12,7 @@ public record GetTransactionsQuery(
     int Year,
     TransactionType? Type,
     int? CategoryId,
-    int? MemberId,
     string? SearchTerm,
     int PageNumber,
-    int PageSize) : IRequest<Result<PaginatedList<TransactionResponse>>>;
+    int PageSize,
+    string? ScopeUserId = null) : IRequest<Result<PaginatedList<TransactionResponse>>>;

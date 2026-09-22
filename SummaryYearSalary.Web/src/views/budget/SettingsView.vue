@@ -3,8 +3,11 @@
     <PageHeader />
 
     <el-tabs v-model="activeTab">
-      <!-- Users tab -->
-      <el-tab-pane label="สมาชิกในครอบครัว" name="members">
+      <!-- Users tab (Admin only) -->
+      <el-tab-pane v-if="authStore.isAdmin" label="ผู้ใช้ในระบบ" name="members">
+        <div class="tab-actions">
+          <el-button type="primary" :icon="Plus" @click="openUserDialog()">เพิ่มผู้ใช้</el-button>
+        </div>
         <el-table v-loading="userManagementStore.loading" :data="userManagementStore.users" stripe>
           <el-table-column label="ชื่อ" min-width="160">
             <template #default="{ row }">
@@ -24,7 +27,8 @@
                 :key="role"
                 :type="role === 'Admin' ? 'danger' : 'primary'"
                 size="small"
-              >{{ role }}</el-tag>
+                >{{ role }}</el-tag
+              >
             </template>
           </el-table-column>
           <el-table-column label="สร้างเมื่อ" width="130">
@@ -37,38 +41,9 @@
               {{ row.lastLoginAt ? formatDate(row.lastLoginAt) : '-' }}
             </template>
           </el-table-column>
-        </el-table>
-      </el-tab-pane>
-
-      <!-- Family Member groups tab -->
-      <el-tab-pane label="กลุ่มผู้ใช้จ่าย" name="memberGroups">
-        <div class="tab-actions">
-          <el-button type="primary" :icon="Plus" @click="openMemberDialog()">เพิ่มกลุ่ม</el-button>
-        </div>
-        <el-table v-loading="memberStore.loading" :data="memberStore.members" stripe>
-          <el-table-column label="สี" width="60">
+          <el-table-column label="" width="60" fixed="right" align="center">
             <template #default="{ row }">
-              <span class="color-dot" :style="{ background: row.color }" />
-            </template>
-          </el-table-column>
-          <el-table-column label="ชื่อ" prop="name" />
-          <el-table-column label="สถานะ" width="90">
-            <template #default="{ row }">
-              <el-tag :type="row.isActive ? 'success' : 'info'" size="small">
-                {{ row.isActive ? 'ใช้งาน' : 'ปิดใช้' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="" width="100" fixed="right">
-            <template #default="{ row }">
-              <el-button text size="small" :icon="Edit" @click="openMemberDialog(row)" />
-              <el-button
-                text
-                size="small"
-                :icon="Delete"
-                type="danger"
-                @click="handleDeleteMember(row.id)"
-              />
+              <el-button text size="small" :icon="Edit" @click="openEditUserDialog(row)" />
             </template>
           </el-table-column>
         </el-table>
@@ -100,68 +75,30 @@
               <el-tag v-if="row.isDefault" type="info" size="small">ระบบ</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="" width="100" fixed="right">
+          <el-table-column label="" width="96" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button
-                text
-                size="small"
-                :icon="Edit"
-                :disabled="row.isDefault"
-                @click="openCategoryDialog(row)"
-              />
-              <el-button
-                text
-                size="small"
-                :icon="Delete"
-                type="danger"
-                :disabled="row.isDefault"
-                @click="handleDeleteCategory(row.id)"
-              />
+              <div class="row-actions">
+                <el-button
+                  text
+                  size="small"
+                  :icon="Edit"
+                  :disabled="row.isDefault"
+                  @click="openCategoryDialog(row)"
+                />
+                <el-button
+                  text
+                  size="small"
+                  :icon="Delete"
+                  type="danger"
+                  :disabled="row.isDefault"
+                  @click="handleDeleteCategory(row.id)"
+                />
+              </div>
             </template>
           </el-table-column>
         </el-table>
       </el-tab-pane>
     </el-tabs>
-
-    <!-- Member dialog -->
-    <el-dialog
-      v-model="memberDialog"
-      :title="editingMember ? 'แก้ไขสมาชิก' : 'เพิ่มสมาชิก'"
-      width="420px"
-    >
-      <el-form :model="memberForm" label-position="top">
-        <el-form-item label="ชื่อ" required>
-          <el-input v-model="memberForm.name" placeholder="ชื่อสมาชิก" maxlength="100" />
-        </el-form-item>
-        <el-form-item label="สี">
-          <div class="color-picker-row">
-            <span class="color-preview" :style="{ background: memberForm.color }" />
-            <el-input
-              v-model="memberForm.color"
-              placeholder="#4A90D9"
-              maxlength="7"
-              style="width: 120px"
-            />
-            <div class="preset-colors">
-              <span
-                v-for="c in presetColors"
-                :key="c"
-                class="preset-dot"
-                :style="{ background: c }"
-                @click="memberForm.color = c"
-              />
-            </div>
-          </div>
-        </el-form-item>
-        <el-form-item v-if="editingMember" label="สถานะ">
-          <el-switch v-model="memberForm.isActive" active-text="ใช้งาน" inactive-text="ปิดใช้" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="memberDialog = false">ยกเลิก</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSaveMember">บันทึก</el-button>
-      </template>
-    </el-dialog>
 
     <!-- Category dialog -->
     <el-dialog
@@ -213,23 +150,80 @@
         <el-button type="primary" :loading="saving" @click="handleSaveCategory">บันทึก</el-button>
       </template>
     </el-dialog>
+
+    <!-- Edit user dialog -->
+    <el-dialog v-model="editUserDialog" title="แก้ไขผู้ใช้" width="420px">
+      <el-form :model="editUserForm" label-position="top">
+        <el-form-item label="ชื่อ" required>
+          <el-input v-model="editUserForm.firstName" placeholder="ชื่อ" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="นามสกุล">
+          <el-input v-model="editUserForm.lastName" placeholder="นามสกุล" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="บทบาท" required>
+          <el-radio-group v-model="editUserForm.role">
+            <el-radio-button value="User">User</el-radio-button>
+            <el-radio-button value="Admin">Admin</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editUserDialog = false">ยกเลิก</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSaveEditUser">บันทึก</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Create user dialog -->
+    <el-dialog v-model="createUserDialog" title="เพิ่มผู้ใช้" width="420px">
+      <el-form :model="createUserForm" label-position="top">
+        <el-form-item label="ชื่อ" required>
+          <el-input v-model="createUserForm.firstName" placeholder="ชื่อ" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="นามสกุล">
+          <el-input v-model="createUserForm.lastName" placeholder="นามสกุล" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="อีเมล" required>
+          <el-input v-model="createUserForm.email" placeholder="you@example.com" />
+        </el-form-item>
+        <el-form-item label="รหัสผ่าน" required>
+          <el-input
+            v-model="createUserForm.password"
+            type="password"
+            show-password
+            placeholder="อย่างน้อย 8 ตัว มีตัวใหญ่/เล็ก/เลข/อักขระพิเศษ"
+          />
+        </el-form-item>
+        <el-form-item label="บทบาท" required>
+          <el-radio-group v-model="createUserForm.role">
+            <el-radio-button value="User">User</el-radio-button>
+            <el-radio-button value="Admin">Admin</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createUserDialog = false">ยกเลิก</el-button>
+        <el-button type="primary" :loading="saving" @click="handleCreateUser"
+          >สร้างผู้ใช้</el-button
+        >
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { formatThaiDate as formatDate } from '@/utils/formatters';
 import { ref, onMounted } from 'vue';
 import { Plus, Edit, Delete } from '@element-plus/icons-vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
-import { useMemberStore } from '@/stores/memberStore';
 import { useCategoryStore } from '@/stores/categoryStore';
 import { useUserManagementStore } from '@/stores/userManagementStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useNotify } from '@/composables/useNotify';
-import type { FamilyMember, Category, TransactionType } from '@/types';
-import dayjs from 'dayjs';
+import type { Category, TransactionType, UserProfile } from '@/types';
 
-const memberStore = useMemberStore();
 const categoryStore = useCategoryStore();
 const userManagementStore = useUserManagementStore();
+const authStore = useAuthStore();
 const { toast, confirm } = useNotify();
 
 // --- User tab helpers ---
@@ -251,12 +245,7 @@ function avatarColor(email?: string): string {
   return avatarColors[idx];
 }
 
-function formatDate(val?: string): string {
-  if (!val) return '-';
-  return dayjs(val).format('DD/MM/YYYY');
-}
-
-const activeTab = ref('members');
+const activeTab = ref(authStore.isAdmin ? 'members' : 'categories');
 const saving = ref(false);
 
 const presetColors = [
@@ -269,54 +258,6 @@ const presetColors = [
   '#e67e22',
   '#3498db',
 ];
-
-// Member dialog
-const memberDialog = ref(false);
-const editingMember = ref<FamilyMember | null>(null);
-const memberForm = ref({ name: '', color: '#4A90D9', isActive: true });
-
-function openMemberDialog(member?: FamilyMember) {
-  editingMember.value = member ?? null;
-  memberForm.value = member
-    ? { name: member.name, color: member.color, isActive: member.isActive }
-    : { name: '', color: '#4A90D9', isActive: true };
-  memberDialog.value = true;
-}
-
-async function handleSaveMember() {
-  if (!memberForm.value.name.trim()) {
-    toast('กรุณาระบุชื่อสมาชิก', 'warning');
-    return;
-  }
-  saving.value = true;
-  try {
-    let result;
-    if (editingMember.value) {
-      result = await memberStore.updateMember(editingMember.value.id, memberForm.value);
-    } else {
-      result = await memberStore.createMember({
-        name: memberForm.value.name,
-        color: memberForm.value.color,
-      });
-    }
-    if (result?.isSuccess) {
-      toast('บันทึกสำเร็จ', 'success');
-      memberDialog.value = false;
-    } else {
-      toast(result?.error ?? 'เกิดข้อผิดพลาด', 'error');
-    }
-  } finally {
-    saving.value = false;
-  }
-}
-
-async function handleDeleteMember(id: number) {
-  const ok = await confirm('ต้องการลบสมาชิกนี้หรือไม่?', { dangerConfirm: true });
-  if (!ok) return;
-  const result = await memberStore.deleteMember(id);
-  if (result?.isSuccess) toast('ลบสมาชิกสำเร็จ', 'success');
-  else toast(result?.error ?? 'เกิดข้อผิดพลาด', 'error');
-}
 
 // Category dialog
 const categoryDialog = ref(false);
@@ -368,10 +309,96 @@ async function handleDeleteCategory(id: number) {
   else toast(result?.error ?? 'เกิดข้อผิดพลาด', 'error');
 }
 
+// Edit user name dialog (Admin only)
+const editUserDialog = ref(false);
+const editingUser = ref<UserProfile | null>(null);
+const editUserForm = ref({ firstName: '', lastName: '', role: 'User' as 'Admin' | 'User' });
+
+function openEditUserDialog(user: UserProfile) {
+  editingUser.value = user;
+  editUserForm.value = {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.roles.includes('Admin') ? 'Admin' : 'User',
+  };
+  editUserDialog.value = true;
+}
+
+async function handleSaveEditUser() {
+  if (!editingUser.value) return;
+  if (!editUserForm.value.firstName.trim()) {
+    toast('กรุณาระบุชื่อ', 'warning');
+    return;
+  }
+  saving.value = true;
+  try {
+    const nameResult = await userManagementStore.updateUser(editingUser.value.id, {
+      firstName: editUserForm.value.firstName,
+      lastName: editUserForm.value.lastName,
+    });
+    if (!nameResult?.isSuccess) {
+      toast(nameResult?.error ?? 'เกิดข้อผิดพลาด', 'error');
+      return;
+    }
+
+    const roleChanged =
+      editUserForm.value.role !== (editingUser.value.roles.includes('Admin') ? 'Admin' : 'User');
+    if (roleChanged) {
+      const roleResult = await userManagementStore.updateUserRole(
+        editingUser.value.id,
+        editUserForm.value.role
+      );
+      if (!roleResult?.isSuccess) {
+        toast(roleResult?.error ?? 'เกิดข้อผิดพลาด', 'error');
+        return;
+      }
+    }
+
+    toast('บันทึกสำเร็จ', 'success');
+    editUserDialog.value = false;
+  } finally {
+    saving.value = false;
+  }
+}
+
+// Create user dialog (Admin only)
+const createUserDialog = ref(false);
+const createUserForm = ref({
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  role: 'User' as 'Admin' | 'User',
+});
+
+function openUserDialog() {
+  createUserForm.value = { firstName: '', lastName: '', email: '', password: '', role: 'User' };
+  createUserDialog.value = true;
+}
+
+async function handleCreateUser() {
+  const { firstName, email, password } = createUserForm.value;
+  if (!firstName.trim() || !email.trim() || !password) {
+    toast('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+    return;
+  }
+  saving.value = true;
+  try {
+    const result = await userManagementStore.createUser(createUserForm.value);
+    if (result?.isSuccess) {
+      toast('สร้างผู้ใช้สำเร็จ', 'success');
+      createUserDialog.value = false;
+    } else {
+      toast(result?.error ?? 'เกิดข้อผิดพลาด', 'error');
+    }
+  } finally {
+    saving.value = false;
+  }
+}
+
 onMounted(async () => {
   await Promise.all([
-    userManagementStore.fetchUsers(),
-    memberStore.fetchMembers(),
+    authStore.isAdmin ? userManagementStore.fetchUsers() : Promise.resolve(),
     categoryStore.fetchCategories(),
   ]);
 });
@@ -382,12 +409,6 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 12px;
-}
-.color-dot {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
 }
 .user-name-cell {
   display: flex;

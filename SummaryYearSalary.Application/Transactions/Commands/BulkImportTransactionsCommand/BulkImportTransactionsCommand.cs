@@ -6,7 +6,6 @@ using MediatR;
 namespace SummaryYearSalary.Application.Transactions.Commands.BulkImportTransactionsCommand;
 
 public record BulkImportItem(
-    int MemberId,
     int CategoryId,
     TransactionType Type,
     decimal Amount,

@@ -25,10 +25,11 @@ export const useAuthStore = defineStore('auth', () => {
     SecureStorage.getItem(STORAGE_USER) ? JSON.parse(SecureStorage.getItem(STORAGE_USER)!) : null
   );
   const loginProvider = ref<LoginProvider | null>(
-    (localStorage.getItem(STORAGE_LOGIN_PROVIDER) as LoginProvider | null)
+    localStorage.getItem(STORAGE_LOGIN_PROVIDER) as LoginProvider | null
   );
 
   const isAuthenticated = computed(() => !!token.value && !!user.value);
+  const isAdmin = computed(() => !!user.value?.metadata?.roles?.includes('Admin'));
 
   /**
    * Redirect URL for post-login navigation
@@ -101,6 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     loginProvider,
     isAuthenticated,
+    isAdmin,
     setAuth,
     clearAuth,
     updateUserMetadata,

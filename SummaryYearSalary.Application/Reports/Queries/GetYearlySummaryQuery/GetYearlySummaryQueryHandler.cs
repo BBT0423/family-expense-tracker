@@ -15,7 +15,7 @@ public class GetYearlySummaryQueryHandler(
 
     public async Task<Result<YearlySummaryResponse>> Handle(GetYearlySummaryQuery request, CancellationToken cancellationToken)
     {
-        var transactions = await _transactionRepository.GetByUserYearAsync(request.UserId, request.Year);
+        var transactions = await ReportScope.ResolveYearAsync(_transactionRepository, request.UserId, request.ScopeUserId, request.Year);
         var list = transactions.ToList();
 
         var months = Enumerable.Range(1, 12).Select(m => new MonthlyBreakdown(

@@ -27,7 +27,7 @@ public static class CategorySeeder
             new() { Name = "ที่พักอาศัย", Type = TransactionType.Expense, Icon = "🏠", Color = "#e74c3c", IsDefault = true, CreatedAt = now },
             new() { Name = "การเดินทาง", Type = TransactionType.Expense, Icon = "🚗", Color = "#c0392b", IsDefault = true, CreatedAt = now },
             new() { Name = "ช้อปปิ้ง", Type = TransactionType.Expense, Icon = "🛍️", Color = "#8e44ad", IsDefault = true, CreatedAt = now },
-            new() { Name = "สุขภาพ", Type = TransactionType.Expense, Icon = "💊", Color = "#e74c3c", IsDefault = true, CreatedAt = now },
+            new() { Name = "สุขภาพ", Type = TransactionType.Expense, Icon = "💊", Color = "#e84393", IsDefault = true, CreatedAt = now },
             new() { Name = "บันเทิง", Type = TransactionType.Expense, Icon = "🎬", Color = "#f39c12", IsDefault = true, CreatedAt = now },
             new() { Name = "การศึกษา", Type = TransactionType.Expense, Icon = "📚", Color = "#2980b9", IsDefault = true, CreatedAt = now },
             new() { Name = "ประกัน", Type = TransactionType.Expense, Icon = "🛡️", Color = "#16a085", IsDefault = true, CreatedAt = now },

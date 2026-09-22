@@ -15,7 +15,7 @@ public class GetMonthlySummaryQueryHandler(
 
     public async Task<Result<MonthlySummaryResponse>> Handle(GetMonthlySummaryQuery request, CancellationToken cancellationToken)
     {
-        var transactions = await _transactionRepository.GetByUserMonthYearAsync(request.UserId, request.Month, request.Year);
+        var transactions = await ReportScope.ResolveMonthYearAsync(_transactionRepository, request.UserId, request.ScopeUserId, request.Month, request.Year);
         var list = transactions.ToList();
 
         var totalIncome = list.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);

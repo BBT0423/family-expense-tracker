@@ -4,9 +4,7 @@ import type { Result } from '@/types';
 
 export const categoryService = {
   async getAll(type?: TransactionType) {
-    return httpClient.get<Result<Category[]>>('/api/categories', {
-      params: type ? { type } : undefined,
-    });
+    return httpClient.get<Result<Category[]>>('/api/categories', { params: { type } });
   },
 
   async create(payload: CreateCategoryRequest) {

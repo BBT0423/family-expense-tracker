@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "SummaryYearSalary.Web/node_modules/vite/bin/vite.js",
+        "SummaryYearSalary.Web",
+        "--port",
+        "5173"
+      ],
+      "port": 5173
+    }
+  ]
+}

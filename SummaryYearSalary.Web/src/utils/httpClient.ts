@@ -1,4 +1,30 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
+import axios, {
+  type AxiosInstance,
+  type AxiosProgressEvent,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from 'axios';
+
+/**
+ * Extended config that surfaces upload/download progress callbacks.
+ * Drop-in replacement for AxiosRequestConfig anywhere a progress bar is needed.
+ *
+ * @example — file import with live percentage
+ * ```ts
+ * const progress = ref(0)
+ * await httpClient.post('/api/transactions/bulk', formData, {
+ *   headers: { 'Content-Type': 'multipart/form-data' },
+ *   onUploadProgress: (e) => {
+ *     progress.value = Math.round((e.loaded / (e.total ?? 1)) * 100)
+ *   },
+ * })
+ * // bind: <AppProgress :model-value="progress" label="กำลังนำเข้าข้อมูล..." />
+ * ```
+ */
+export interface HttpProgressConfig extends AxiosRequestConfig {
+  onUploadProgress?: (event: AxiosProgressEvent) => void;
+  onDownloadProgress?: (event: AxiosProgressEvent) => void;
+}
 import axiosRetry from 'axios-retry';
 import { SecureStorage } from '@/utils/storage';
 import {
@@ -201,23 +227,23 @@ class HttpClient {
   }
 
   /**
-   * POST request
+   * POST request — supports onUploadProgress / onDownloadProgress via HttpProgressConfig
    */
   public async post<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: HttpProgressConfig
   ): Promise<AxiosResponse<T>> {
     return this.client.post<T>(url, data, config);
   }
 
   /**
-   * PUT request
+   * PUT request — supports onUploadProgress / onDownloadProgress via HttpProgressConfig
    */
   public async put<T = any>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: HttpProgressConfig
   ): Promise<AxiosResponse<T>> {
     return this.client.put<T>(url, data, config);
   }

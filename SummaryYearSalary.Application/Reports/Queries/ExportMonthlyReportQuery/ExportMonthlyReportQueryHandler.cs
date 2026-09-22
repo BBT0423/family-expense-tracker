@@ -16,7 +16,7 @@ public class ExportMonthlyReportQueryHandler(
 
     public async Task<Result<byte[]>> Handle(ExportMonthlyReportQuery request, CancellationToken cancellationToken)
     {
-        var transactions = await _transactionRepository.GetByUserMonthYearAsync(request.UserId, request.Month, request.Year);
+        var transactions = await ReportScope.ResolveMonthYearAsync(_transactionRepository, request.UserId, request.ScopeUserId, request.Month, request.Year);
         var bytes = _excelExportService.GenerateMonthlyReport(transactions, request.Month, request.Year);
         return Result.Success(bytes);
     }

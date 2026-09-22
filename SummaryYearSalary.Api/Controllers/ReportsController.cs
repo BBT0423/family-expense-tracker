@@ -1,7 +1,6 @@
 using SummaryYearSalary.Application.Interfaces;
 using SummaryYearSalary.Application.Reports.Queries.ExportMonthlyReportQuery;
 using SummaryYearSalary.Application.Reports.Queries.GetCategorySummaryQuery;
-using SummaryYearSalary.Application.Reports.Queries.GetMemberSummaryQuery;
 using SummaryYearSalary.Application.Reports.Queries.GetMonthlySummaryQuery;
 using SummaryYearSalary.Application.Reports.Queries.GetYearlySummaryQuery;
 
@@ -22,49 +21,41 @@ public class ReportsController(ISender mediator, IAppLogger logger) : BaseContro
 
     [HttpGet("summary")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMonthlySummary([FromQuery] int month, [FromQuery] int year)
+    public async Task<IActionResult> GetMonthlySummary([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null)
     {
-        var query = new GetMonthlySummaryQuery(GetCurrentUserId(), month, year);
+        var query = new GetMonthlySummaryQuery(GetCurrentUserId(), month, year, userId);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Summary Failed");
     }
 
     [HttpGet("yearly")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetYearlySummary([FromQuery] int year)
+    public async Task<IActionResult> GetYearlySummary([FromQuery] int year, [FromQuery] string? userId = null)
     {
-        var query = new GetYearlySummaryQuery(GetCurrentUserId(), year);
+        var query = new GetYearlySummaryQuery(GetCurrentUserId(), year, userId);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Yearly Summary Failed");
     }
 
     [HttpGet("by-category")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCategorySummary([FromQuery] int month, [FromQuery] int year)
+    public async Task<IActionResult> GetCategorySummary([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null)
     {
-        var query = new GetCategorySummaryQuery(GetCurrentUserId(), month, year);
+        var query = new GetCategorySummaryQuery(GetCurrentUserId(), month, year, userId);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Category Summary Failed");
     }
 
-    [HttpGet("by-member")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMemberSummary([FromQuery] int month, [FromQuery] int year)
-    {
-        var query = new GetMemberSummaryQuery(GetCurrentUserId(), month, year);
-        var result = await _mediator.Send(query);
-        return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Member Summary Failed");
-    }
-
     [HttpGet("export")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> ExportMonthly([FromQuery] int month, [FromQuery] int year)
+    public async Task<IActionResult> ExportMonthly([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null)
     {
-        var query = new ExportMonthlyReportQuery(GetCurrentUserId(), month, year);
+        var requesterId = GetCurrentUserId();
+        var query = new ExportMonthlyReportQuery(requesterId, month, year, userId);
         var result = await _mediator.Send(query);
         if (!result.IsSuccess)
         {
-            _logger.LogDebug("Export failed for user {UserId}", GetCurrentUserId());
+            _logger.LogDebug("Export failed for user {UserId}", requesterId);
             return ToProblem(result, "Export Failed");
         }
 

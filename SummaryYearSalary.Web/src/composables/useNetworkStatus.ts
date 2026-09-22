@@ -83,7 +83,6 @@ export const useNetworkStatus = () => {
     const connection = (
       navigator as Navigator & {
         connection?: {
-          // eslint-disable-next-line no-unused-vars
           addEventListener?: (event: string, handler: () => void) => void;
         };
       }
@@ -105,7 +104,6 @@ export const useNetworkStatus = () => {
     const connection = (
       navigator as Navigator & {
         connection?: {
-          // eslint-disable-next-line no-unused-vars
           removeEventListener?: (event: string, handler: () => void) => void;
         };
       }

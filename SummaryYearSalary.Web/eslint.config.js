@@ -42,6 +42,7 @@ export default [
       'prettier/prettier': 'error',
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'warn',
+      'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

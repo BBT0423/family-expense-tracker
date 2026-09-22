@@ -1,203 +1,345 @@
 <template>
-  <div id="loginContainer" class="auth-login-container">
-    <div class="auth-logo">
-      <h1 class="auth-welcome-text">Sign in</h1>
-      <p class="auth-subtitle">to continue to your account</p>
-    </div>
-    <ProMessage />
-    <template v-if="isAuthenticated && !showLoginForm">
-      <div class="auth-continue-group">
-        <button class="btn btn-primary btn-full" @click="continueWithUser">
-          Continue as {{ userName }}
-        </button>
-        <button class="btn btn-secondary btn-full" @click="showLoginForm = true">
-          Login with different account
-        </button>
-      </div>
-    </template>
-    <template v-else>
-      <!-- Login method tabs -->
-      <div class="login-tabs">
-        <button
-          class="login-tab"
-          :class="{ active: activeTab === 'email' }"
-          @click="activeTab = 'email'"
-        >
-          Email
-        </button>
-        <button
-          class="login-tab"
-          :class="{ active: activeTab === 'phone' }"
-          @click="activeTab = 'phone'"
-        >
-          เบอร์โทร
-        </button>
-      </div>
+  <div class="auth-login-container">
+    <div class="ep-card">
+      <div class="ep-card__body">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 20px">
+          <div class="ep-h1" style="margin-bottom: 4px">เข้าสู่ระบบ</div>
+          <div style="font-size: 13px; color: var(--ep-text-3)">Family Expense Tracker</div>
+        </div>
 
-      <!-- Email / Password Login -->
-      <form v-if="activeTab === 'email'" id="loginForm" @submit.prevent="login">
-        <ProGrid :columns="1">
-          <div class="form-group">
-            <label class="form-label" for="username">Email address</label>
-            <input
-              id="username"
-              v-model="pageData.email"
-              class="form-input"
-              type="text"
-              placeholder="Enter your email"
-              autocomplete="username"
-              required
-            />
-            <div v-if="errors.email" class="form-error">{{ errors.email }}</div>
-          </div>
-          <div class="form-group mb-4">
-            <label class="form-label" for="password">Password</label>
-            <input
-              id="password"
-              v-model="pageData.password"
-              class="form-input"
-              type="password"
-              placeholder="Enter your password"
-              autocomplete="current-password"
-              required
-            />
-            <div v-if="errors.password" class="form-error">{{ errors.password }}</div>
-          </div>
+        <ProMessage />
 
-          <button
-            type="submit"
-            class="btn btn-primary btn-full"
-            :class="{ 'btn-loading': loading }"
-            :disabled="loading"
+        <!-- Already logged-in: continue or switch account -->
+        <template v-if="isAuthenticated && !showLoginForm">
+          <div class="ep-avatar">{{ userInitial }}</div>
+          <div
+            style="
+              text-align: center;
+              font-size: 14px;
+              color: var(--ep-text-2);
+              margin-bottom: 20px;
+            "
           >
-            <span v-if="loading">Signing in...</span>
-            <span v-else>Sign in</span>
+            {{ userName }}
+          </div>
+          <button class="ep-btn ep-btn--primary" @click="continueWithUser">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Continue as {{ userName }}
           </button>
-        </ProGrid>
-      </form>
+          <button class="ep-btn ep-btn--default" @click="showLoginForm = true">
+            เข้าสู่ระบบด้วยบัญชีอื่น
+          </button>
+        </template>
 
-      <!-- Phone OTP Login -->
-      <form v-else id="phoneLoginForm" @submit.prevent="handlePhoneStep">
-        <ProGrid :columns="1">
-          <template v-if="phoneStep === 'phone'">
-            <div class="form-group">
-              <label class="form-label" for="phoneNumber">เบอร์โทรศัพท์</label>
-              <input
-                id="phoneNumber"
-                v-model="phoneData.phoneNumber"
-                class="form-input"
-                type="tel"
-                placeholder="0812345678"
-                autocomplete="tel"
-                required
-              />
-              <div v-if="phoneErrors.phoneNumber" class="form-error">
-                {{ phoneErrors.phoneNumber }}
+        <template v-else>
+          <!-- Tabs -->
+          <div class="ep-tabs">
+            <div class="ep-tabs__nav-wrap">
+              <div
+                class="ep-tabs__item"
+                :class="{ 'is-active': activeTab === 'email' }"
+                @click="activeTab = 'email'"
+              >
+                อีเมล / รหัสผ่าน
+              </div>
+              <div
+                class="ep-tabs__item"
+                :class="{ 'is-active': activeTab === 'phone' }"
+                @click="activeTab = 'phone'"
+              >
+                เบอร์โทร
               </div>
             </div>
-            <button
-              type="submit"
-              class="btn btn-primary btn-full"
-              :class="{ 'btn-loading': phoneLoading }"
-              :disabled="phoneLoading"
-            >
-              <span v-if="phoneLoading">กำลังส่ง OTP...</span>
-              <span v-else>ส่ง OTP ไปยัง Email</span>
-            </button>
-          </template>
+          </div>
 
-          <template v-else>
-            <p class="otp-hint">
-              ส่งรหัส OTP ไปยัง email ที่ผูกกับเบอร์ {{ phoneData.phoneNumber }} แล้ว
-            </p>
-            <div class="form-group">
-              <label class="form-label" for="otpCode">รหัส OTP (6 หลัก)</label>
-              <input
-                id="otpCode"
-                v-model="phoneData.otpCode"
-                class="form-input otp-input"
-                type="text"
-                inputmode="numeric"
-                maxlength="6"
-                placeholder="000000"
-                autocomplete="one-time-code"
-                required
-              />
-              <div v-if="phoneErrors.otpCode" class="form-error">{{ phoneErrors.otpCode }}</div>
+          <!-- ── Email / Password ── -->
+          <form v-if="activeTab === 'email'" @submit.prevent="login">
+            <div class="ep-form">
+              <div class="ep-form-item">
+                <label class="ep-form-item__label"> <span class="required">*</span>อีเมล </label>
+                <div class="ep-input">
+                  <div
+                    class="ep-input__wrapper"
+                    :class="{ 'ep-input__wrapper--error': errors.email }"
+                  >
+                    <span class="ep-input__prefix">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                        />
+                        <polyline points="22,6 12,12 2,6" />
+                      </svg>
+                    </span>
+                    <input
+                      v-model="pageData.email"
+                      class="ep-input__inner"
+                      type="email"
+                      placeholder="you@example.com"
+                      autocomplete="username"
+                    />
+                  </div>
+                </div>
+                <div v-if="errors.email" class="ep-form-item__error">{{ errors.email }}</div>
+              </div>
+
+              <div class="ep-form-item">
+                <label class="ep-form-item__label"> <span class="required">*</span>รหัสผ่าน </label>
+                <div class="ep-input">
+                  <div
+                    class="ep-input__wrapper"
+                    :class="{ 'ep-input__wrapper--error': errors.password }"
+                  >
+                    <span class="ep-input__prefix">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </span>
+                    <input
+                      id="pw-main"
+                      v-model="pageData.password"
+                      class="ep-input__inner"
+                      :type="showPassword ? 'text' : 'password'"
+                      placeholder="รหัสผ่าน"
+                      autocomplete="current-password"
+                    />
+                    <span class="ep-input__suffix" @click="showPassword = !showPassword">
+                      <svg
+                        v-if="!showPassword"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <svg
+                        v-else
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+                        />
+                        <path
+                          d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+                        />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+                <div v-if="errors.password" class="ep-form-item__error">{{ errors.password }}</div>
+              </div>
             </div>
-            <button
-              type="submit"
-              class="btn btn-primary btn-full"
-              :class="{ 'btn-loading': phoneLoading }"
-              :disabled="phoneLoading"
-            >
-              <span v-if="phoneLoading">กำลังตรวจสอบ...</span>
-              <span v-else>เข้าสู่ระบบ</span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-link btn-full"
-              :disabled="phoneLoading || resendCooldown > 0"
-              @click="resendOtp"
-            >
-              <span v-if="resendCooldown > 0">ส่งรหัสใหม่ได้ใน {{ resendCooldown }}s</span>
-              <span v-else>ส่งรหัสใหม่</span>
-            </button>
-          </template>
-        </ProGrid>
-      </form>
 
-      <!-- Google Login -->
-      <template v-if="!isAuthenticated || showLoginForm">
-        <div class="divider">
-          <span>หรือ</span>
-        </div>
-        <a :href="googleLoginUrl" class="btn-google">
-          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
-              fill="#4285F4"
-            />
-            <path
-              d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
-              fill="#34A853"
-            />
-            <path
-              d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
-              fill="#FBBC05"
-            />
-            <path
-              d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"
-              fill="#EA4335"
-            />
-          </svg>
-          เข้าสู่ระบบด้วย Google
-        </a>
-      </template>
+            <div style="margin-top: 20px">
+              <button type="submit" class="ep-btn ep-btn--primary" :disabled="loading">
+                {{ loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
+              </button>
+              <AppProgress v-if="loading" :indeterminate="true" style="margin-top: 8px" />
+            </div>
+          </form>
 
-      <p class="signup-link">
-        ยังไม่มีบัญชี?
-        <router-link to="/authorize/register">สมัครสมาชิก</router-link>
-      </p>
-    </template>
+          <!-- ── Phone OTP ── -->
+          <form v-else @submit.prevent="handlePhoneStep">
+            <!-- Step 1: phone number -->
+            <template v-if="phoneStep === 'phone'">
+              <div class="ep-form">
+                <div class="ep-form-item">
+                  <label class="ep-form-item__label">
+                    <span class="required">*</span>เบอร์โทรศัพท์
+                  </label>
+                  <div class="ep-input">
+                    <div
+                      class="ep-input__wrapper"
+                      :class="{ 'ep-input__wrapper--error': phoneErrors.phoneNumber }"
+                    >
+                      <span class="ep-input__prefix">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.36 2 2 0 0 1 3.56 1.14h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
+                          />
+                        </svg>
+                      </span>
+                      <input
+                        v-model="phoneData.phoneNumber"
+                        class="ep-input__inner"
+                        type="tel"
+                        placeholder="0812345678"
+                        maxlength="10"
+                        autocomplete="tel"
+                      />
+                    </div>
+                  </div>
+                  <div v-if="phoneErrors.phoneNumber" class="ep-form-item__error">
+                    {{ phoneErrors.phoneNumber }}
+                  </div>
+                  <div class="ep-form-item__hint">รูปแบบไทย: 08x-xxxx-xxxx</div>
+                </div>
+              </div>
+              <div style="margin-top: 8px">
+                <button type="submit" class="ep-btn ep-btn--primary" :disabled="phoneLoading">
+                  {{ phoneLoading ? 'กำลังส่ง...' : 'ส่ง OTP' }}
+                </button>
+                <AppProgress v-if="phoneLoading" :indeterminate="true" style="margin-top: 8px" />
+              </div>
+            </template>
 
+            <!-- Step 2: OTP cells -->
+            <template v-else>
+              <div
+                style="
+                  font-size: 13px;
+                  color: var(--ep-text-2);
+                  margin-bottom: 14px;
+                  line-height: 1.6;
+                "
+              >
+                ส่งรหัส 6 หลักไปที่ email ที่ผูกกับ <strong>{{ phoneData.phoneNumber }}</strong>
+              </div>
+
+              <div ref="otpRowRef" class="ep-otp-row">
+                <input
+                  v-for="(_, i) in 6"
+                  :key="i"
+                  :ref="(el) => (otpCells[i] = el as HTMLInputElement)"
+                  class="ep-otp-cell"
+                  :class="{ filled: otpDigits[i] }"
+                  type="tel"
+                  maxlength="1"
+                  inputmode="numeric"
+                  :value="otpDigits[i]"
+                  @input="onOtpInput($event, i)"
+                  @keydown="onOtpKeydown($event, i)"
+                  @paste.prevent="onOtpPaste($event)"
+                />
+              </div>
+
+              <div
+                v-if="phoneErrors.otpCode"
+                class="ep-form-item__error"
+                style="margin-bottom: 8px"
+              >
+                {{ phoneErrors.otpCode }}
+              </div>
+
+              <div class="ep-countdown">
+                <span v-if="resendCooldown > 0">
+                  ส่งรหัสใหม่ได้ใน
+                  <strong style="color: var(--ep-primary)"
+                    >{{ String(Math.floor(resendCooldown / 60)).padStart(2, '0') }}:{{
+                      String(resendCooldown % 60).padStart(2, '0')
+                    }}</strong
+                  >
+                </span>
+                <button
+                  v-else
+                  type="button"
+                  class="ep-btn ep-btn--link"
+                  style="width: auto; height: auto; padding: 0"
+                  :disabled="phoneLoading"
+                  @click="resendOtp"
+                >
+                  ส่งรหัสใหม่
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                class="ep-btn ep-btn--primary"
+                :disabled="phoneLoading || otpDigits.join('').length < 6"
+              >
+                {{ phoneLoading ? 'กำลังตรวจสอบ...' : 'ยืนยัน OTP' }}
+              </button>
+              <AppProgress v-if="phoneLoading" :indeterminate="true" style="margin-top: 8px" />
+              <button type="button" class="ep-btn ep-btn--default" @click="goBackToPhone">
+                ← กลับ
+              </button>
+            </template>
+          </form>
+
+          <!-- Google + register link -->
+          <div class="ep-divider">หรือ</div>
+          <a :href="googleLoginUrl" class="ep-btn ep-btn--google">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
+              />
+              <path
+                fill="#34A853"
+                d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.615 24 12.255 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 0 0 0 10.76l3.98-3.09z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.64 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"
+              />
+            </svg>
+            Sign in with Google
+          </a>
+
+          <div class="ep-link">
+            ยังไม่มีบัญชี?
+            <router-link to="/authorize/register"><b>สมัครสมาชิก</b></router-link>
+          </div>
+        </template>
+      </div>
+    </div>
     <div class="app-version">v{{ appVersion }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
 import { useLogin } from '@/composables/useLogin';
 import { usePhoneLogin } from '@/composables/usePhoneLogin';
 import { APP_VERSION } from '@/constants/version';
-import { ref, computed, onMounted } from 'vue';
 import { useGlobalUi } from '@/composables/useGlobalUi';
+import AppProgress from '@/components/AppProgress.vue';
 
 const appVersion = APP_VERSION;
 const activeTab = ref<'email' | 'phone'>('email');
+const showLoginForm = ref(false);
+const showPassword = ref(false);
 const { showMessage } = useGlobalUi();
 
 const { pageData, loading, errors, isAuthenticated, user, login, continueWithUser } = useLogin();
-
 const {
   phoneData,
   phoneLoading,
@@ -209,8 +351,57 @@ const {
 } = usePhoneLogin();
 
 const userName = computed(() => user?.name || 'User');
-const showLoginForm = ref(false);
+const userInitial = computed(() => (user?.name || 'U').charAt(0).toUpperCase());
 const googleLoginUrl = `${import.meta.env.VITE_API_BASE_URL}/api/authorize/google`;
+
+// ── OTP cell management ──
+const otpDigits = ref<string[]>(Array(6).fill(''));
+const otpCells = ref<HTMLInputElement[]>([]);
+
+function syncOtpToModel() {
+  phoneData.otpCode = otpDigits.value.join('');
+}
+
+function onOtpInput(event: Event, index: number) {
+  const input = event.target as HTMLInputElement;
+  const digit = input.value.replace(/\D/g, '').slice(-1);
+  otpDigits.value[index] = digit;
+  input.value = digit;
+  syncOtpToModel();
+  if (digit && index < 5) otpCells.value[index + 1]?.focus();
+}
+
+function onOtpKeydown(event: KeyboardEvent, index: number) {
+  if (event.key === 'Backspace' && !otpDigits.value[index] && index > 0) {
+    otpDigits.value[index - 1] = '';
+    syncOtpToModel();
+    otpCells.value[index - 1]?.focus();
+  } else if (event.key === 'ArrowLeft' && index > 0) {
+    otpCells.value[index - 1]?.focus();
+  } else if (event.key === 'ArrowRight' && index < 5) {
+    otpCells.value[index + 1]?.focus();
+  }
+}
+
+function onOtpPaste(event: ClipboardEvent) {
+  const digits = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6);
+  digits.split('').forEach((d, i) => {
+    otpDigits.value[i] = d;
+  });
+  syncOtpToModel();
+  const next = Math.min(digits.length, 5);
+  otpCells.value[next]?.focus();
+}
+
+function goBackToPhone() {
+  otpDigits.value = Array(6).fill('');
+  syncOtpToModel();
+  // reset phoneStep via composable by clearing phone number and re-entering
+  phoneData.phoneNumber = '';
+  phoneData.otpCode = '';
+  // The composable exposes phoneStep as a ref; we access it directly
+  (phoneStep as any).value = 'phone';
+}
 
 onMounted(() => {
   if (sessionStorage.getItem('SESSION_EXPIRED') === 'true') {
@@ -221,140 +412,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.form-error {
-  color: #e53e3e;
-  font-size: 0.97em;
-  margin-top: 4px;
-  margin-bottom: 2px;
-}
-
-.auth-continue-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.login-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.login-tab {
-  flex: 1;
-  padding: 10px 16px;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #718096;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.login-tab.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-}
-
-.otp-hint {
-  font-size: 13px;
-  color: #718096;
+.app-version {
   text-align: center;
-  margin-bottom: 0.5rem;
+  margin-top: 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.otp-input {
-  text-align: center;
-  letter-spacing: 8px;
-  font-size: 20px;
+.ep-link a {
+  color: var(--ep-primary);
+  text-decoration: none;
   font-weight: 600;
 }
-
-.btn-link {
-  background: none;
-  border: none;
-  color: #667eea;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 8px;
-  text-align: center;
-  width: 100%;
-}
-
-.btn-link:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.btn-link:disabled {
-  color: #a0aec0;
-  cursor: not-allowed;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 1.25rem 0;
-  color: #a0aec0;
-  font-size: 13px;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.divider span {
-  padding: 0 12px;
-}
-
-.btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 11px 16px;
-  background: white;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #4a5568;
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    background 0.2s,
-    border-color 0.2s;
-  margin-bottom: 0.5rem;
-}
-
-.btn-google:hover {
-  background: #f7fafc;
-  border-color: #cbd5e0;
-}
-
-.signup-link {
-  text-align: center;
-  font-size: 14px;
-  color: #718096;
-  margin-top: 1rem;
-}
-
-.signup-link a {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.signup-link a:hover {
+.ep-link a:hover {
   text-decoration: underline;
 }
 </style>

@@ -135,5 +135,6 @@ public static class TestEndpoints
     public const string ResetPassword = "/api/authorize/reset-password";
     public const string VerifyMfa = "/api/authorize/mfa/verify";
     public const string EnableMfa = "/api/user/mfa/enable";
+    public const string ConfirmMfa = "/api/user/mfa/confirm";
     public const string ChangePassword = "/api/user/change-password";
 }

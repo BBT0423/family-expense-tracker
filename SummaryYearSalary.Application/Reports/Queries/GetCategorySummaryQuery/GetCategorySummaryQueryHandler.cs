@@ -15,7 +15,7 @@ public class GetCategorySummaryQueryHandler(
 
     public async Task<Result<CategorySummaryResponse>> Handle(GetCategorySummaryQuery request, CancellationToken cancellationToken)
     {
-        var transactions = await _transactionRepository.GetByUserMonthYearAsync(request.UserId, request.Month, request.Year);
+        var transactions = await ReportScope.ResolveMonthYearAsync(_transactionRepository, request.UserId, request.ScopeUserId, request.Month, request.Year);
         var expenses = transactions.Where(t => t.Type == TransactionType.Expense).ToList();
         var totalExpense = expenses.Sum(t => t.Amount);
 
