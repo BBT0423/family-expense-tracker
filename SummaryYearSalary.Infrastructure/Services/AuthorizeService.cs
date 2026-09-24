@@ -6,8 +6,6 @@ using SummaryYearSalary.Application.Authorize.Commands.ForgotPasswordCommand;
 using SummaryYearSalary.Application.Authorize.Commands.LoginCommand;
 using SummaryYearSalary.Application.Authorize.Commands.RefreshTokenCommand;
 using SummaryYearSalary.Application.Authorize.Commands.ResetPasswordCommand;
-using SummaryYearSalary.Application.Authorize.Commands.SendPhoneOtpCommand;
-using SummaryYearSalary.Application.Authorize.Commands.VerifyPhoneOtpCommand;
 using SummaryYearSalary.Application.Authorize.Queries.VerifyMfaQuery;
 using SummaryYearSalary.Application.Common;
 using SummaryYearSalary.Application.Interfaces;
@@ -348,100 +346,6 @@ public class AuthorizeService(
             _jwtSettings.AccessTokenExpirationMinutes,
             user.IsMfaEnabled,
             new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, await BuildMetadata(user))
-        ));
-    }
-
-    public async Task<Result<bool>> SendPhoneOtpAsync(SendPhoneOtpCommand request, CancellationToken cancellationToken)
-    {
-        var user = await _userManager.Users
-            .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken);
-
-        if (user == null)
-        {
-            return Result.Success<bool>(true);
-        }
-
-        if (string.IsNullOrEmpty(user.Email))
-        {
-            return Result.Failure<bool>("No email linked to this phone number.");
-        }
-
-        var now = DateTimeProvider.GetBangkokTimeZone();
-        const int maxRequestsPerHour = 3;
-        const int windowHours = 1;
-
-        if (!user.PhoneOtpWindowStart.HasValue || user.PhoneOtpWindowStart.Value.AddHours(windowHours) < now)
-        {
-            user.PhoneOtpRequestCount = 0;
-            user.PhoneOtpWindowStart = now;
-        }
-
-        if (user.PhoneOtpRequestCount >= maxRequestsPerHour)
-        {
-            return Result.Failure<bool>("Too many OTP requests. Please try again later.");
-        }
-
-        var otpCode = Random.Shared.Next(100000, 999999).ToString();
-        user.PhoneOtpCode = otpCode;
-        user.PhoneOtpExpiry = now.AddMinutes(5);
-        user.PhoneOtpRequestCount++;
-        await _userManager.UpdateAsync(user);
-
-        var body = new StringBuilder(request.Template);
-        body.Replace("[Name]", user.FirstName ?? user.UserName);
-        body.Replace("[PhoneNumber]", request.PhoneNumber);
-        body.Replace("[OtpCode]", otpCode);
-
-        using var message = new MailMessage(new MailAddress(user.Email), new MailAddress(user.Email))
-        {
-            Subject = "Family Expense Tracker - รหัส OTP เข้าสู่ระบบ",
-            Body = body.ToString(),
-            IsBodyHtml = true
-        };
-
-        await _emailRepository.SendEmailAsync(message, cancellationToken);
-        return Result.Success<bool>(true);
-    }
-
-    public async Task<Result<AuthorizeResponse>> VerifyPhoneOtpAsync(VerifyPhoneOtpCommand request, CancellationToken cancellationToken)
-    {
-        var user = await _userManager.Users
-            .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken);
-
-        if (user == null || string.IsNullOrEmpty(user.PhoneOtpCode))
-        {
-            return Result.Unauthorized<AuthorizeResponse>("Invalid OTP.");
-        }
-
-        var now = DateTimeProvider.GetBangkokTimeZone();
-
-        if (user.PhoneOtpExpiry < now)
-        {
-            return Result.Unauthorized<AuthorizeResponse>("OTP has expired. Please request a new one.");
-        }
-
-        if (user.PhoneOtpCode != request.OtpCode)
-        {
-            return Result.Unauthorized<AuthorizeResponse>("Invalid OTP.");
-        }
-
-        user.PhoneOtpCode = null;
-        user.PhoneOtpExpiry = null;
-        user.PhoneOtpRequestCount = 0;
-        user.PhoneOtpWindowStart = null;
-        user.LastLoginAt = now;
-        await _userManager.UpdateAsync(user);
-
-        var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
-        var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id!, request.IpAddress);
-        await _refreshTokenRepository.AddAsync(refreshToken);
-
-        return Result.Success(new AuthorizeResponse(
-            accessToken,
-            refreshToken.Token,
-            _jwtSettings.AccessTokenExpirationMinutes,
-            user.IsMfaEnabled,
-            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}", string.Empty, await BuildMetadata(user))
         ));
     }
 

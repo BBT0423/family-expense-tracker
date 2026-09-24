@@ -35,28 +35,8 @@
         </template>
 
         <template v-else>
-          <!-- Tabs -->
-          <div class="ep-tabs">
-            <div class="ep-tabs__nav-wrap">
-              <div
-                class="ep-tabs__item"
-                :class="{ 'is-active': activeTab === 'email' }"
-                @click="activeTab = 'email'"
-              >
-                อีเมล / รหัสผ่าน
-              </div>
-              <div
-                class="ep-tabs__item"
-                :class="{ 'is-active': activeTab === 'phone' }"
-                @click="activeTab = 'phone'"
-              >
-                เบอร์โทร
-              </div>
-            </div>
-          </div>
-
           <!-- ── Email / Password ── -->
-          <form v-if="activeTab === 'email'" @submit.prevent="login">
+          <form @submit.prevent="login">
             <div class="ep-form">
               <div class="ep-form-item">
                 <label class="ep-form-item__label"> <span class="required">*</span>อีเมล </label>
@@ -165,131 +145,6 @@
             </div>
           </form>
 
-          <!-- ── Phone OTP ── -->
-          <form v-else @submit.prevent="handlePhoneStep">
-            <!-- Step 1: phone number -->
-            <template v-if="phoneStep === 'phone'">
-              <div class="ep-form">
-                <div class="ep-form-item">
-                  <label class="ep-form-item__label">
-                    <span class="required">*</span>เบอร์โทรศัพท์
-                  </label>
-                  <div class="ep-input">
-                    <div
-                      class="ep-input__wrapper"
-                      :class="{ 'ep-input__wrapper--error': phoneErrors.phoneNumber }"
-                    >
-                      <span class="ep-input__prefix">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path
-                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.57 3.36 2 2 0 0 1 3.56 1.14h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
-                          />
-                        </svg>
-                      </span>
-                      <input
-                        v-model="phoneData.phoneNumber"
-                        class="ep-input__inner"
-                        type="tel"
-                        placeholder="0812345678"
-                        maxlength="10"
-                        autocomplete="tel"
-                      />
-                    </div>
-                  </div>
-                  <div v-if="phoneErrors.phoneNumber" class="ep-form-item__error">
-                    {{ phoneErrors.phoneNumber }}
-                  </div>
-                  <div class="ep-form-item__hint">รูปแบบไทย: 08x-xxxx-xxxx</div>
-                </div>
-              </div>
-              <div style="margin-top: 8px">
-                <button type="submit" class="ep-btn ep-btn--primary" :disabled="phoneLoading">
-                  {{ phoneLoading ? 'กำลังส่ง...' : 'ส่ง OTP' }}
-                </button>
-                <AppProgress v-if="phoneLoading" :indeterminate="true" style="margin-top: 8px" />
-              </div>
-            </template>
-
-            <!-- Step 2: OTP cells -->
-            <template v-else>
-              <div
-                style="
-                  font-size: 13px;
-                  color: var(--ep-text-2);
-                  margin-bottom: 14px;
-                  line-height: 1.6;
-                "
-              >
-                ส่งรหัส 6 หลักไปที่ email ที่ผูกกับ <strong>{{ phoneData.phoneNumber }}</strong>
-              </div>
-
-              <div ref="otpRowRef" class="ep-otp-row">
-                <input
-                  v-for="(_, i) in 6"
-                  :key="i"
-                  :ref="(el) => (otpCells[i] = el as HTMLInputElement)"
-                  class="ep-otp-cell"
-                  :class="{ filled: otpDigits[i] }"
-                  type="tel"
-                  maxlength="1"
-                  inputmode="numeric"
-                  :value="otpDigits[i]"
-                  @input="onOtpInput($event, i)"
-                  @keydown="onOtpKeydown($event, i)"
-                  @paste.prevent="onOtpPaste($event)"
-                />
-              </div>
-
-              <div
-                v-if="phoneErrors.otpCode"
-                class="ep-form-item__error"
-                style="margin-bottom: 8px"
-              >
-                {{ phoneErrors.otpCode }}
-              </div>
-
-              <div class="ep-countdown">
-                <span v-if="resendCooldown > 0">
-                  ส่งรหัสใหม่ได้ใน
-                  <strong style="color: var(--ep-primary)"
-                    >{{ String(Math.floor(resendCooldown / 60)).padStart(2, '0') }}:{{
-                      String(resendCooldown % 60).padStart(2, '0')
-                    }}</strong
-                  >
-                </span>
-                <button
-                  v-else
-                  type="button"
-                  class="ep-btn ep-btn--link"
-                  style="width: auto; height: auto; padding: 0"
-                  :disabled="phoneLoading"
-                  @click="resendOtp"
-                >
-                  ส่งรหัสใหม่
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                class="ep-btn ep-btn--primary"
-                :disabled="phoneLoading || otpDigits.join('').length < 6"
-              >
-                {{ phoneLoading ? 'กำลังตรวจสอบ...' : 'ยืนยัน OTP' }}
-              </button>
-              <AppProgress v-if="phoneLoading" :indeterminate="true" style="margin-top: 8px" />
-              <button type="button" class="ep-btn ep-btn--default" @click="goBackToPhone">
-                ← กลับ
-              </button>
-            </template>
-          </form>
-
           <!-- Google + register link -->
           <div class="ep-divider">หรือ</div>
           <a :href="googleLoginUrl" class="ep-btn ep-btn--google">
@@ -328,80 +183,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useLogin } from '@/composables/useLogin';
-import { usePhoneLogin } from '@/composables/usePhoneLogin';
 import { APP_VERSION } from '@/constants/version';
 import { useGlobalUi } from '@/composables/useGlobalUi';
 import AppProgress from '@/components/AppProgress.vue';
 
 const appVersion = APP_VERSION;
-const activeTab = ref<'email' | 'phone'>('email');
 const showLoginForm = ref(false);
 const showPassword = ref(false);
 const { showMessage } = useGlobalUi();
 
 const { pageData, loading, errors, isAuthenticated, user, login, continueWithUser } = useLogin();
-const {
-  phoneData,
-  phoneLoading,
-  phoneErrors,
-  phoneStep,
-  resendCooldown,
-  handlePhoneStep,
-  resendOtp,
-} = usePhoneLogin();
 
 const userName = computed(() => user?.name || 'User');
 const userInitial = computed(() => (user?.name || 'U').charAt(0).toUpperCase());
 const googleLoginUrl = `${import.meta.env.VITE_API_BASE_URL}/api/authorize/google`;
-
-// ── OTP cell management ──
-const otpDigits = ref<string[]>(Array(6).fill(''));
-const otpCells = ref<HTMLInputElement[]>([]);
-
-function syncOtpToModel() {
-  phoneData.otpCode = otpDigits.value.join('');
-}
-
-function onOtpInput(event: Event, index: number) {
-  const input = event.target as HTMLInputElement;
-  const digit = input.value.replace(/\D/g, '').slice(-1);
-  otpDigits.value[index] = digit;
-  input.value = digit;
-  syncOtpToModel();
-  if (digit && index < 5) otpCells.value[index + 1]?.focus();
-}
-
-function onOtpKeydown(event: KeyboardEvent, index: number) {
-  if (event.key === 'Backspace' && !otpDigits.value[index] && index > 0) {
-    otpDigits.value[index - 1] = '';
-    syncOtpToModel();
-    otpCells.value[index - 1]?.focus();
-  } else if (event.key === 'ArrowLeft' && index > 0) {
-    otpCells.value[index - 1]?.focus();
-  } else if (event.key === 'ArrowRight' && index < 5) {
-    otpCells.value[index + 1]?.focus();
-  }
-}
-
-function onOtpPaste(event: ClipboardEvent) {
-  const digits = (event.clipboardData?.getData('text') ?? '').replace(/\D/g, '').slice(0, 6);
-  digits.split('').forEach((d, i) => {
-    otpDigits.value[i] = d;
-  });
-  syncOtpToModel();
-  const next = Math.min(digits.length, 5);
-  otpCells.value[next]?.focus();
-}
-
-function goBackToPhone() {
-  otpDigits.value = Array(6).fill('');
-  syncOtpToModel();
-  // reset phoneStep via composable by clearing phone number and re-entering
-  phoneData.phoneNumber = '';
-  phoneData.otpCode = '';
-  // The composable exposes phoneStep as a ref; we access it directly
-  (phoneStep as any).value = 'phone';
-}
 
 onMounted(() => {
   if (sessionStorage.getItem('SESSION_EXPIRED') === 'true') {

@@ -4,8 +4,6 @@ using SummaryYearSalary.Application.Authorize.Commands.ForgotPasswordCommand;
 using SummaryYearSalary.Application.Authorize.Commands.LoginCommand;
 using SummaryYearSalary.Application.Authorize.Commands.RefreshTokenCommand;
 using SummaryYearSalary.Application.Authorize.Commands.ResetPasswordCommand;
-using SummaryYearSalary.Application.Authorize.Commands.SendPhoneOtpCommand;
-using SummaryYearSalary.Application.Authorize.Commands.VerifyPhoneOtpCommand;
 using SummaryYearSalary.Application.Authorize.Queries.VerifyMfaQuery;
 using SummaryYearSalary.Application.Interfaces;
 using SummaryYearSalary.Application.Interfaces.IServices;
@@ -198,60 +196,6 @@ public class AuthorizeController(ISender mediator, IMapper mapper, IAppLogger lo
         }
 
         _logger.LogDebug("User {Email} registered successfully from {IpAddress}", request.Email, ipAddress);
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// Send OTP code to email linked with the given phone number.
-    /// </summary>
-    [HttpPost("phone/send-otp")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SendPhoneOtp([FromBody] SendPhoneOtpRequest request)
-    {
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
-
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
-        var template = await System.IO.File.ReadAllTextAsync(TemplateConstants.PhoneOtpTemplate);
-        var command = new SendPhoneOtpCommand(request.PhoneNumber, ipAddress, template);
-        var result = await _mediator.Send(command);
-
-        if (!result.IsSuccess)
-        {
-            _logger.LogDebug("Send phone OTP failed for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
-            return ToProblem(result, "Send OTP Failed");
-        }
-
-        _logger.LogDebug("Send phone OTP succeeded for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
-        return Ok(result);
-    }
-
-    /// <summary>
-    /// Verify phone OTP code and return JWT tokens.
-    /// </summary>
-    [HttpPost("phone/verify-otp")]
-    [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> VerifyPhoneOtp([FromBody] VerifyPhoneOtpRequest request)
-    {
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
-
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ApiConstants.Unknown;
-        var command = new VerifyPhoneOtpCommand(request.PhoneNumber, request.OtpCode, ipAddress);
-        var result = await _mediator.Send(command);
-
-        if (!result.IsSuccess)
-        {
-            _logger.LogDebug("Phone OTP verification failed for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
-            return ToProblem(result, "OTP Verification Failed");
-        }
-
-        _logger.LogDebug("Phone OTP verification succeeded for {PhoneNumber} from {IpAddress}", request.PhoneNumber, ipAddress);
         return Ok(result);
     }
 

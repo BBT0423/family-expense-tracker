@@ -2,7 +2,7 @@
  * Authentication related type definitions
  */
 
-export type LoginProvider = 'email' | 'google' | 'phone';
+export type LoginProvider = 'email' | 'google';
 
 export interface LoginRequest {
   email: string;
@@ -54,13 +54,4 @@ export interface ChangePasswordRequest {
 export interface RefreshTokenRequest {
   refreshToken: string;
   userId: string;
-}
-
-export interface SendPhoneOtpRequest {
-  phoneNumber: string;
-}
-
-export interface VerifyPhoneOtpRequest {
-  phoneNumber: string;
-  otpCode: string;
 }

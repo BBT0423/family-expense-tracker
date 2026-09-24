@@ -221,18 +221,6 @@ namespace SummaryYearSalary.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("PhoneOtpCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PhoneOtpExpiry")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("PhoneOtpRequestCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("PhoneOtpWindowStart")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
