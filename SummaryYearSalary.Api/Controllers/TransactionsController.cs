@@ -101,6 +101,6 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
             _logger.LogDebug("Bulk import failed for user {UserId}", userId);
             return ToProblem(result, "Bulk Import Failed");
         }
-        return Ok(new { ImportedCount = result.Value });
+        return Ok(result);
     }
 }

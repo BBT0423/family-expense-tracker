@@ -28,8 +28,12 @@ export const transactionService = {
   },
 
   async bulkImport(items: BulkImportItem[]) {
-    return httpClient.post<Result<{ importedCount: number }>>('/api/transactions/bulk-import', {
-      items,
-    });
+    // Large imports (thousands of rows) can take a while server-side —
+    // give this one request more room than the 60s default before it aborts.
+    return httpClient.post<Result<number>>(
+      '/api/transactions/bulk-import',
+      { items },
+      { timeout: 180000 }
+    );
   },
 };

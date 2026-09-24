@@ -44,18 +44,8 @@ public class BulkImportTransactionsCommandHandler(
         if (transactions.Count == 0)
             return Result.Failure<int>("ไม่มีรายการที่สามารถนำเข้าได้");
 
-        await _unitOfWork.BeginTransactionAsync();
-        try
-        {
-            await _transactionRepository.AddRangeAsync(transactions);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync();
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync();
-            throw;
-        }
+        await _transactionRepository.AddRangeAsync(transactions);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(transactions.Count);
     }

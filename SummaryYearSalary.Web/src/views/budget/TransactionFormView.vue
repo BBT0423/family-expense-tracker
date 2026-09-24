@@ -2,7 +2,7 @@
   <div>
     <PageHeader />
 
-    <el-card shadow="never" style="max-width: 640px; margin: 0 auto">
+    <el-card shadow="never">
       <el-form :model="form" label-position="top" @submit.prevent="handleSubmit">
         <!-- Income / Expense toggle -->
         <el-form-item label="ประเภท">

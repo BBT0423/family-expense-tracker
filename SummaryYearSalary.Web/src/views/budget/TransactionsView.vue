@@ -19,7 +19,8 @@
           type="month"
           format="MMM BBBB"
           value-format="YYYY-MM"
-          placeholder="เดือน/ปี"
+          placeholder="เดือน/ปี (ว่าง = ทุกเดือน)"
+          clearable
           @change="onDateChange"
         />
         <el-select v-model="filterType" placeholder="ประเภท" clearable @change="onFilterChange">
@@ -160,10 +161,16 @@ function getFilter() {
   };
 }
 
-async function onDateChange(val: string) {
-  const [y, m] = val.split('-').map(Number);
-  currentYear.value = y;
-  currentMonth.value = m;
+async function onDateChange(val: string | null) {
+  if (val) {
+    const [y, m] = val.split('-').map(Number);
+    currentYear.value = y;
+    currentMonth.value = m;
+  } else {
+    // Cleared — 0/0 means "no month/year filter" to the backend, i.e. all time.
+    currentYear.value = 0;
+    currentMonth.value = 0;
+  }
   currentPage.value = 1;
   await transactionStore.fetchTransactions(getFilter());
 }

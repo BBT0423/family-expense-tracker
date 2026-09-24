@@ -26,6 +26,50 @@
         </el-button>
       </el-tooltip>
 
+      <!-- Import job progress -->
+      <el-dropdown v-if="importStatus !== 'idle'" trigger="click" placement="bottom-end">
+        <el-button text circle>
+          <el-progress
+            v-if="importStatus === 'running'"
+            type="circle"
+            :percentage="importPercent"
+            :width="22"
+            :stroke-width="3"
+            :show-text="false"
+          />
+          <el-icon v-else-if="importStatus === 'done'" size="18" color="var(--el-color-success)"
+            ><CircleCheck
+          /></el-icon>
+          <el-icon v-else size="18" color="var(--el-color-danger)"><CircleClose /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <div class="notif-panel import-panel">
+            <div class="notif-panel-header">
+              <span>สถานะนำเข้าข้อมูล</span>
+            </div>
+            <div class="import-panel-body">
+              <template v-if="importStatus === 'running'">
+                <div class="import-status-text">
+                  กำลังนำเข้า {{ importCompleted }}/{{ importTotal }} รายการ ({{ importPercent }}%)
+                </div>
+                <el-progress :percentage="importPercent" />
+              </template>
+              <template v-else-if="importStatus === 'done'">
+                <div class="import-status-text">นำเข้าสำเร็จ {{ importCompleted }} รายการ</div>
+                <el-button size="small" text @click="importJobStore.reset()">ปิด</el-button>
+              </template>
+              <template v-else-if="importStatus === 'error'">
+                <div class="import-status-text error">
+                  นำเข้าล้มเหลวหลังจากสำเร็จไปแล้ว {{ importCompleted }} รายการ
+                </div>
+                <div class="import-status-detail">{{ importErrorMessage }}</div>
+                <el-button size="small" text @click="importJobStore.reset()">ปิด</el-button>
+              </template>
+            </div>
+          </div>
+        </template>
+      </el-dropdown>
+
       <!-- Notification bell -->
       <el-dropdown trigger="click" placement="bottom-end" @visible-change="onNotifToggle">
         <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="9" class="notif-badge">
@@ -77,8 +121,10 @@
 import { computed, inject, onMounted, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
+import { CircleCheck, CircleClose } from '@element-plus/icons-vue';
 import type { NotificationItem } from '@/types';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useImportJobStore } from '@/stores/importJobStore';
 import { formatDateTime } from '@/utils/formatters';
 
 defineEmits(['toggle-sidebar']);
@@ -88,6 +134,15 @@ const router = useRouter();
 
 const notificationStore = useNotificationStore();
 const { notifications, unreadCount } = storeToRefs(notificationStore);
+
+const importJobStore = useImportJobStore();
+const {
+  status: importStatus,
+  percent: importPercent,
+  completed: importCompleted,
+  total: importTotal,
+  errorMessage: importErrorMessage,
+} = storeToRefs(importJobStore);
 
 let pollHandle: ReturnType<typeof setInterval> | undefined;
 
@@ -145,6 +200,27 @@ const pageTitle = computed(() => route.meta?.title as string | undefined);
   max-height: 420px;
   display: flex;
   flex-direction: column;
+}
+
+.import-panel-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import-status-text {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.import-status-text.error {
+  color: var(--el-color-danger);
+}
+
+.import-status-detail {
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .notif-panel-header {

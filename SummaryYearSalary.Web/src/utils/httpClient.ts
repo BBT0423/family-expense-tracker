@@ -36,11 +36,6 @@ import {
 import { authService } from '@/services/authService';
 import { useGlobalUi } from '@/composables/useGlobalUi';
 
-// Configure axios retry globally
-axiosRetry(axios, {
-  retries: Number(import.meta.env.VITE_MAXIMUM_RETRIES) || 3,
-  retryDelay: axiosRetry.exponentialDelay,
-});
 interface CacheEntry {
   response: AxiosResponse;
   timestamp: number;
@@ -67,13 +62,20 @@ class HttpClient {
   }
 
   private createAxiosInstance(): AxiosInstance {
-    return axios.create({
+    const instance = axios.create({
       baseURL: this.baseURL,
       timeout: this.timeout,
       headers: {
         'Content-Type': 'application/json',
       },
     });
+
+    axiosRetry(instance, {
+      retries: Number(import.meta.env.VITE_MAXIMUM_RETRIES) || 3,
+      retryDelay: axiosRetry.exponentialDelay,
+    });
+
+    return instance;
   }
 
   /**
