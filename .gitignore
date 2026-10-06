@@ -87,3 +87,13 @@ TestResults/
 # ============================================================
 *.log
 logs/
+
+# ============================================================
+# Local tooling / caches
+# ============================================================
+.vite/
+__pycache__/
+*.pyc
+.claude/settings.local.json
+.claude/worktrees/
+.claude/scheduled_tasks.lock
