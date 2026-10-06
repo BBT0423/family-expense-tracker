@@ -4,6 +4,7 @@ import type {
   CreateTransactionRequest,
   BulkImportItem,
   TransactionFilter,
+  TransactionHistoryEntry,
 } from '@/types';
 import type { Result } from '@/types';
 import type { PaginatedList } from '@/utils/paginatedList';
@@ -25,6 +26,10 @@ export const transactionService = {
 
   async remove(id: number) {
     return httpClient.delete<Result<boolean>>(`/api/transactions/${id}`);
+  },
+
+  async getHistory(id: number) {
+    return httpClient.get<Result<TransactionHistoryEntry[]>>(`/api/transactions/${id}/history`);
   },
 
   async bulkImport(items: BulkImportItem[]) {

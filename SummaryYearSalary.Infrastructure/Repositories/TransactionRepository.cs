@@ -14,22 +14,23 @@ public class TransactionRepository(SummaryYearSalaryDbContext context)
     public Task<PaginatedList<Transaction>> GetPagedByUserAsync(
         string userId, int month, int year,
         TransactionType? type, int? categoryId,
-        string? searchTerm, int pageNumber, int pageSize) =>
-        GetPagedAsync(userId, month, year, type, categoryId, searchTerm, pageNumber, pageSize);
+        string? searchTerm, int pageNumber, int pageSize, int? memberId = null) =>
+        GetPagedAsync(userId, month, year, type, categoryId, searchTerm, pageNumber, pageSize, memberId);
 
     public Task<PaginatedList<Transaction>> GetAllUsersPagedAsync(
         int month, int year,
         TransactionType? type, int? categoryId,
-        string? searchTerm, int pageNumber, int pageSize) =>
-        GetPagedAsync(null, month, year, type, categoryId, searchTerm, pageNumber, pageSize);
+        string? searchTerm, int pageNumber, int pageSize, int? memberId = null) =>
+        GetPagedAsync(null, month, year, type, categoryId, searchTerm, pageNumber, pageSize, memberId);
 
     private async Task<PaginatedList<Transaction>> GetPagedAsync(
         string? userId, int month, int year,
         TransactionType? type, int? categoryId,
-        string? searchTerm, int pageNumber, int pageSize)
+        string? searchTerm, int pageNumber, int pageSize, int? memberId)
     {
         var query = _dbSet
             .Include(t => t.Category)
+            .Include(t => t.Member)
             .AsQueryable();
 
         if (userId is not null)
@@ -43,6 +44,8 @@ public class TransactionRepository(SummaryYearSalaryDbContext context)
             query = query.Where(t => t.Type == type.Value);
         if (categoryId.HasValue)
             query = query.Where(t => t.CategoryId == categoryId.Value);
+        if (memberId.HasValue)
+            query = query.Where(t => t.MemberId == memberId.Value);
         if (!string.IsNullOrWhiteSpace(searchTerm))
             query = query.Where(t => t.Note != null && t.Note.Contains(searchTerm));
 
@@ -57,31 +60,35 @@ public class TransactionRepository(SummaryYearSalaryDbContext context)
         return new PaginatedList<Transaction>(items.AsReadOnly(), count, pageNumber, pageSize);
     }
 
-    public Task<IEnumerable<Transaction>> GetByUserMonthYearAsync(string userId, int month, int year) =>
-        GetMonthYearAsync(userId, month, year);
+    public Task<IEnumerable<Transaction>> GetByUserMonthYearAsync(string userId, int month, int year, int? memberId = null) =>
+        GetMonthYearAsync(userId, month, year, memberId);
 
-    public Task<IEnumerable<Transaction>> GetAllUsersMonthYearAsync(int month, int year) =>
-        GetMonthYearAsync(null, month, year);
+    public Task<IEnumerable<Transaction>> GetAllUsersMonthYearAsync(int month, int year, int? memberId = null) =>
+        GetMonthYearAsync(null, month, year, memberId);
 
-    private async Task<IEnumerable<Transaction>> GetMonthYearAsync(string? userId, int month, int year)
+    private async Task<IEnumerable<Transaction>> GetMonthYearAsync(string? userId, int month, int year, int? memberId)
     {
-        var query = _dbSet
-            .Include(t => t.Category)
-            .Where(t => t.TransactionDate.Month == month && t.TransactionDate.Year == year);
+        var query = _dbSet.Include(t => t.Category).AsQueryable();
 
+        if (month > 0)
+            query = query.Where(t => t.TransactionDate.Month == month);
+        if (year > 0)
+            query = query.Where(t => t.TransactionDate.Year == year);
         if (userId is not null)
             query = query.Where(t => t.UserId == userId);
+        if (memberId.HasValue)
+            query = query.Where(t => t.MemberId == memberId.Value);
 
         return await query.OrderByDescending(t => t.TransactionDate).ToListAsync();
     }
 
-    public Task<IEnumerable<Transaction>> GetByUserYearAsync(string userId, int year) =>
-        GetYearAsync(userId, year);
+    public Task<IEnumerable<Transaction>> GetByUserYearAsync(string userId, int year, int? memberId = null) =>
+        GetYearAsync(userId, year, memberId);
 
-    public Task<IEnumerable<Transaction>> GetAllUsersYearAsync(int year) =>
-        GetYearAsync(null, year);
+    public Task<IEnumerable<Transaction>> GetAllUsersYearAsync(int year, int? memberId = null) =>
+        GetYearAsync(null, year, memberId);
 
-    private async Task<IEnumerable<Transaction>> GetYearAsync(string? userId, int year)
+    private async Task<IEnumerable<Transaction>> GetYearAsync(string? userId, int year, int? memberId)
     {
         var query = _dbSet
             .Include(t => t.Category)
@@ -89,6 +96,8 @@ public class TransactionRepository(SummaryYearSalaryDbContext context)
 
         if (userId is not null)
             query = query.Where(t => t.UserId == userId);
+        if (memberId.HasValue)
+            query = query.Where(t => t.MemberId == memberId.Value);
 
         return await query.OrderBy(t => t.TransactionDate).ToListAsync();
     }

@@ -1,15 +1,20 @@
 {
   "name": "SummaryYearSalary-web",
-  "version": "1.0.0-04042026",
+  "version": "1.0.0-06102026",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "predev": "npm run lint && npm run format",
     "dev": "vite",
+    "electron:dev": "electron .",
     "prebuild": "node update-version.js",
+    "predist": "npm run build",
+    "dist": "electron-builder --win",
+    "dist:dir": "electron-builder --win --dir",
     "build": "vite build",
     "build:staging": "vite build --mode staging",
     "build:prod": "vite build --mode production",
@@ -48,6 +53,8 @@
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.2.0",
     "@vue/tsconfig": "^0.7.0",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.5",
@@ -62,5 +69,46 @@
     "vite-plugin-package-version": "^1.1.0",
     "vite-plugin-remove-console": "^2.2.0",
     "vue-tsc": "^2.1.10"
+  },
+  "build": {
+    "appId": "com.innofinite.summaryyearsalary",
+    "productName": "SummaryYearSalary",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../SummaryYearSalary.Api/publish",
+        "to": "api",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "icon": "build/icon.ico",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "include": "build/installer.nsh",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    }
   }
 }

@@ -23,6 +23,5 @@ public interface IAuthorizeService
     Task<Result<bool>> ForgotPasswordAsync(ForgotPasswordCommand request, CancellationToken cancellationToken);
     Task<Result<bool>> ResetPasswordAsync(ResetPasswordCommand request, CancellationToken cancellationToken);
     Task<Result<bool>> ChangePasswordAsync(ChangePasswordCommand request, CancellationToken cancellationToken);
-    Task<Result<AuthorizeResponse>> GoogleLoginAsync(string email, string name, string googleId, string ipAddress, CancellationToken cancellationToken = default);
     Task<Result<AuthorizeResponse>> RegisterAsync(string email, string password, string firstName, string lastName, string ipAddress, CancellationToken cancellationToken = default);
 }

@@ -12,6 +12,7 @@ public record CreateTransactionCommand(
     string UserId,
     string CreatedByUserId,
     int CategoryId,
+    int? MemberId,
     TransactionType Type,
     decimal Amount,
     string? Note,
@@ -23,6 +24,9 @@ public class CreateTransactionCommandValidator : AbstractValidator<CreateTransac
     {
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("กรุณาเลือกหมวดหมู่");
+
+        RuleFor(x => x.MemberId)
+            .NotNull().GreaterThan(0).WithMessage("กรุณาเลือกสมาชิก");
 
         RuleFor(x => x.Amount)
             .GreaterThan(0).WithMessage("จำนวนเงินต้องมากกว่า 0");

@@ -10,6 +10,7 @@ using SummaryYearSalary.Infrastructure.Data;
 
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 
@@ -24,7 +25,6 @@ public static partial class Program
         var builder = WebApplication.CreateBuilder(args);
         
         ConfigureBuilderServices(builder);
-        ConfigureDatabase(builder);
 
         static void ConfigureBuilderServices(WebApplicationBuilder builder)
         {
@@ -56,13 +56,6 @@ public static partial class Program
 
             QuestPDF.Settings.CheckIfAllTextGlyphsAreAvailable = true;
         }
-
-        static void ConfigureDatabase(WebApplicationBuilder builder)
-        {
-            builder.Services.AddDbContext<SummaryYearSalaryDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("SummaryYearSalaryConnection")));
-        }
-
 
         static void HandleGlobalError(IApplicationBuilder errorApp) => errorApp.Run(async context =>
         {
@@ -97,7 +90,8 @@ public static partial class Program
             timestamp = DateTimeProvider.GetBangkokTimeZone(),
             version = "1.0.0"
         }))
-        .AllowAnonymous();
+        .AllowAnonymous()
+        .DisableRateLimiting();
 
         if (app.Environment.IsDevelopment())
         {
@@ -174,10 +168,20 @@ public static partial class Program
                 FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "Public")),
                 RequestPath = "/Public"
             });
+
+            // Serve the built Vue app (wwwroot/index.html + assets) for the desktop build.
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();
+
+            // SPA fallback: any route that isn't an API call or a real static file
+            // (e.g. /dashboard, /budget/transactions) should still return index.html
+            // so Vue Router can handle it client-side.
+            app.MapFallbackToFile("index.html");
         }
     }
 

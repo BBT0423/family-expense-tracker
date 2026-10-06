@@ -41,7 +41,13 @@ interface AlertState {
   buttonText?: string;
 }
 
-const _loading = ref(false);
+interface LoadingState {
+  show: boolean;
+  title?: string;
+  hint?: string;
+}
+
+const _loading = ref<LoadingState>({ show: false });
 const _alert = ref<AlertState>({
   show: false,
   message: '',
@@ -58,12 +64,12 @@ const _message = ref<MessageState>({
   closable: true,
 });
 
-function showLoading() {
-  _loading.value = true;
+function showLoading(title?: string, hint?: string) {
+  _loading.value = { show: true, title, hint };
 }
 
 function hideLoading() {
-  _loading.value = false;
+  _loading.value.show = false;
 }
 
 function showAlert(

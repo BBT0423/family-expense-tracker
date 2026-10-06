@@ -34,6 +34,7 @@ public class BulkImportTransactionsCommandHandler(
                 UserId = request.UserId,
                 CreatedByUserId = request.UserId,
                 CategoryId = item.CategoryId,
+                MemberId = item.MemberId,
                 Type = item.Type,
                 Amount = item.Amount,
                 Note = item.Note,

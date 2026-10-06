@@ -22,6 +22,27 @@ export interface Transaction {
   createdAt: string;
   createdByName?: string;
   ownerName?: string;
+  memberId?: number;
+  memberName?: string;
+  memberColor?: string;
+}
+
+export interface Member {
+  id: number;
+  name: string;
+  color: string;
+  isActive: boolean;
+}
+
+export interface CreateMemberRequest {
+  name: string;
+  color: string;
+}
+
+export interface UpdateMemberRequest {
+  name: string;
+  color: string;
+  isActive: boolean;
 }
 
 export interface MonthlySummary {
@@ -74,14 +95,25 @@ export interface TransactionFilter {
   pageNumber?: number;
   pageSize?: number;
   userId?: string;
+  memberId?: number;
 }
 
 export interface CreateTransactionRequest {
   categoryId: number;
+  memberId?: number;
   type: TransactionType;
   amount: number;
   note?: string;
   transactionDate: string;
+}
+
+export interface TransactionHistoryEntry {
+  id: number;
+  fieldName: string;
+  oldValue?: string;
+  newValue?: string;
+  changedByName: string;
+  changedAt: string;
 }
 
 export interface CreateCategoryRequest {
@@ -93,6 +125,7 @@ export interface CreateCategoryRequest {
 
 export interface BulkImportItem {
   categoryId: number;
+  memberId?: number;
   type: TransactionType;
   amount: number;
   note?: string;

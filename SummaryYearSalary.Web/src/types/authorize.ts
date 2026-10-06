@@ -2,7 +2,7 @@
  * Authentication related type definitions
  */
 
-export type LoginProvider = 'email' | 'google';
+export type LoginProvider = 'email';
 
 export interface LoginRequest {
   email: string;
@@ -54,4 +54,12 @@ export interface ChangePasswordRequest {
 export interface RefreshTokenRequest {
   refreshToken: string;
   userId: string;
+}
+
+export interface RegisterRequest {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
 }

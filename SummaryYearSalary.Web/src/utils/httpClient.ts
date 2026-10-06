@@ -26,6 +26,7 @@ export interface HttpProgressConfig extends AxiosRequestConfig {
   onDownloadProgress?: (event: AxiosProgressEvent) => void;
 }
 import axiosRetry from 'axios-retry';
+import { ref } from 'vue';
 import { SecureStorage } from '@/utils/storage';
 import {
   STORAGE_EXPIRES_IN,
@@ -39,6 +40,14 @@ import { useGlobalUi } from '@/composables/useGlobalUi';
 interface CacheEntry {
   response: AxiosResponse;
   timestamp: number;
+}
+
+// Count of in-flight non-GET (write) requests — checked by the Electron
+// shell's close-confirmation handler so the app can warn before quitting
+// mid-save/import instead of silently killing the backend request.
+export const pendingWrites = ref(0);
+function isWriteMethod(method?: string): boolean {
+  return !!method && method.toLowerCase() !== 'get';
 }
 
 /**
@@ -99,7 +108,7 @@ class HttpClient {
         publicPaths.some((p) => currentPath.startsWith(p)) || currentPath === '/';
 
       // Only save redirect for protected pages
-      if (!isPublicPath && currentPath !== '/authorize/login') {
+      if (!isPublicPath && currentPath !== '/authorize/welcome') {
         sessionStorage.setItem('REDIRECT_URL', currentPath);
       }
 
@@ -110,15 +119,38 @@ class HttpClient {
       console.warn('Failed to clear auth data from storage:', storageError);
     }
 
-    // Redirect to login page
-    if (globalThis.location.pathname !== '/authorize/login') {
-      globalThis.location.href = '/authorize/login';
+    // Send back to the intro screen, which silently re-establishes a
+    // session with the shared device account — no login page to show.
+    if (globalThis.location.pathname !== '/authorize/welcome') {
+      globalThis.location.href = '/authorize/welcome';
     }
   }
 
   private setupInterceptors(): void {
     this.setupRequestInterceptor();
     this.setupResponseInterceptor();
+    this.setupPendingWriteTracking();
+  }
+
+  private setupPendingWriteTracking(): void {
+    this.client.interceptors.request.use((config) => {
+      if (isWriteMethod(config.method)) pendingWrites.value++;
+      return config;
+    });
+    this.client.interceptors.response.use(
+      (response) => {
+        if (isWriteMethod(response.config.method)) {
+          pendingWrites.value = Math.max(0, pendingWrites.value - 1);
+        }
+        return response;
+      },
+      (error) => {
+        if (isWriteMethod(error.config?.method)) {
+          pendingWrites.value = Math.max(0, pendingWrites.value - 1);
+        }
+        throw error;
+      }
+    );
   }
 
   private setupRequestInterceptor(): void {

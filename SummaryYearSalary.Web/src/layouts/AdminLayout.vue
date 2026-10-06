@@ -5,6 +5,7 @@ import { useGlobalUi } from '@/composables/useGlobalUi';
 import { STORAGE_THEME } from '@/constants/storage';
 import AdminSidebar from '@/components/admin/AdminSidebar.vue';
 import AdminHeader from '@/components/admin/AdminHeader.vue';
+import AppTour from '@/components/admin/AppTour.vue';
 
 const sidebarOpen = ref(false); // mobile/tablet drawer
 const sidebarCollapsed = ref(false); // desktop collapse
@@ -62,7 +63,10 @@ onUnmounted(() => {
 <template>
   <ProAlert />
   <ProConfirm />
-  <ProLoading v-if="loading" :loading="loading" />
+  <AppTour />
+  <Transition name="ov-fade">
+    <ProLoading v-if="loading.show" :title="loading.title" :hint="loading.hint" />
+  </Transition>
 
   <div class="dashboard">
     <div v-if="sidebarOpen" class="sidebar-overlay" @click="handleCloseSidebar" />
@@ -80,3 +84,17 @@ onUnmounted(() => {
     </main>
   </div>
 </template>
+
+<style scoped>
+/* Graceful fade-out for ProLoading when it closes — entrance is handled by
+   the component's own CSS animation, this only covers the leave phase since
+   plain v-if would otherwise remove it instantly. */
+.ov-fade-leave-active {
+  animation: ov-fade-out 0.2s ease-in forwards;
+}
+@keyframes ov-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+</style>

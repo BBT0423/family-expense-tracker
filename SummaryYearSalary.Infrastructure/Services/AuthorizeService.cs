@@ -257,57 +257,6 @@ public class AuthorizeService(
         return Result.Success<bool>(true);
     }
 
-    public async Task<Result<AuthorizeResponse>> GoogleLoginAsync(string email, string name, string googleId, string ipAddress, CancellationToken cancellationToken = default)
-    {
-        var user = await _userManager.FindByEmailAsync(email);
-
-        if (user == null)
-        {
-            var nameParts = name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-            user = new ApplicationUser
-            {
-                Id = Guid.NewGuid().ToString(),
-                Email = email,
-                UserName = email,
-                FirstName = nameParts.Length > 0 ? nameParts[0] : name,
-                LastName = nameParts.Length > 1 ? nameParts[1] : string.Empty,
-                EmailConfirmed = true,
-                CreatedAt = DateTimeProvider.GetBangkokTimeZone()
-            };
-
-            var createResult = await _userManager.CreateAsync(user);
-            if (!createResult.Succeeded)
-            {
-                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                return Result.Failure<AuthorizeResponse>($"Failed to create user: {errors}");
-            }
-
-            await _userManager.AddToRoleAsync(user, "User");
-        }
-
-        var loginInfo = new UserLoginInfo("Google", googleId, "Google");
-        var existingLogins = await _userManager.GetLoginsAsync(user);
-        if (!existingLogins.Any(l => l.LoginProvider == "Google" && l.ProviderKey == googleId))
-        {
-            await _userManager.AddLoginAsync(user, loginInfo);
-        }
-
-        user.LastLoginAt = DateTimeProvider.GetBangkokTimeZone();
-        await _userManager.UpdateAsync(user);
-
-        var accessToken = await _jwtTokenGenerator.GenerateJwtTokenAsync(user);
-        var refreshToken = await _jwtTokenGenerator.GenerateRefreshTokenAsync(user.Id!, ipAddress);
-        await _refreshTokenRepository.AddAsync(refreshToken);
-
-        return Result.Success(new AuthorizeResponse(
-            accessToken,
-            refreshToken.Token,
-            _jwtSettings.AccessTokenExpirationMinutes,
-            user.IsMfaEnabled,
-            new UserResponse(user.Id ?? string.Empty, user.Email ?? string.Empty, $"{user.FirstName} {user.LastName}".Trim(), string.Empty, await BuildMetadata(user))
-        ));
-    }
-
     public async Task<Result<AuthorizeResponse>> RegisterAsync(string email, string password, string firstName, string lastName, string ipAddress, CancellationToken cancellationToken = default)
     {
         var existingUser = await _userManager.FindByEmailAsync(email);

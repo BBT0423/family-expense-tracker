@@ -3,7 +3,6 @@ import type {
   CreateUserRequest,
   EnableMfaResponse,
   UpdateUserRequest,
-  UserDirectoryEntry,
   UserProfile,
   Result,
 } from '@/types';
@@ -16,15 +15,6 @@ export const userService = {
    */
   async getAll() {
     return httpClient.get<Result<UserProfile[]>>('/api/users');
-  },
-
-  /**
-   * GET /api/users/directory
-   * Name + email only for every other user — open to any authenticated user,
-   * used to populate "who to view" / "who to send to" pickers.
-   */
-  async getDirectory() {
-    return httpClient.get<Result<UserDirectoryEntry[]>>('/api/users/directory');
   },
 
   /**

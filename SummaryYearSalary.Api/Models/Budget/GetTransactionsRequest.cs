@@ -10,4 +10,5 @@ public class GetTransactionsRequest
     public int? PageNumber { get; init; }
     public int? PageSize { get; init; }
     public string? UserId { get; init; }
+    public int? MemberId { get; init; }
 }

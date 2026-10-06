@@ -15,4 +15,5 @@ public record GetTransactionsQuery(
     string? SearchTerm,
     int PageNumber,
     int PageSize,
-    string? ScopeUserId = null) : IRequest<Result<PaginatedList<TransactionResponse>>>;
+    string? ScopeUserId = null,
+    int? MemberId = null) : IRequest<Result<PaginatedList<TransactionResponse>>>;

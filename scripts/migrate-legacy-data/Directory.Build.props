@@ -1,0 +1,9 @@
+<Project>
+  <!-- Isolates this throwaway migration tool from the repo root's strict
+       Directory.Build.props/Directory.Packages.props (TreatWarningsAsErrors,
+       centralized package versions, SonarAnalyzer) — none of that applies to
+       a one-off script that gets deleted after use. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

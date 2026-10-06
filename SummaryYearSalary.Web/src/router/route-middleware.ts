@@ -20,7 +20,7 @@ const routeMiddleware = (router: Router) => {
     clearAll();
 
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-      next('/authorize/login');
+      next('/authorize/welcome');
       return;
     }
 

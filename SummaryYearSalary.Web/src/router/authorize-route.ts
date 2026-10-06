@@ -1,30 +1,5 @@
 export const AuthorizeRoutes = [
   {
-    path: 'login',
-    name: 'Login',
-    component: () => import('@/views/authorize/Login.vue'),
-    meta: {
-      title: 'Login',
-    },
-  },
-  {
-    path: 'otp',
-    name: 'Otp',
-    component: () => import('@/views/authorize/Otp.vue'),
-    meta: {
-      title: 'Verify OTP',
-    },
-  },
-  {
-    path: 'change-password',
-    name: 'ChangePassword',
-    component: () => import('@/views/authorize/ChangePasswordView.vue'),
-    meta: {
-      title: 'Change Password',
-      requiresAuth: true,
-    },
-  },
-  {
     path: 'welcome',
     name: 'Welcome',
     component: () => import('@/views/authorize/Welcome.vue'),
@@ -41,23 +16,7 @@ export const AuthorizeRoutes = [
     },
   },
   {
-    path: 'google/callback',
-    name: 'GoogleCallback',
-    component: () => import('@/views/authorize/GoogleCallback.vue'),
-    meta: {
-      title: 'Signing in with Google...',
-    },
-  },
-  {
-    path: 'register',
-    name: 'Register',
-    component: () => import('@/views/authorize/Register.vue'),
-    meta: {
-      title: 'สมัครสมาชิก',
-    },
-  },
-  {
     path: '',
-    redirect: '/authorize/login',
+    redirect: '/authorize/welcome',
   },
 ];

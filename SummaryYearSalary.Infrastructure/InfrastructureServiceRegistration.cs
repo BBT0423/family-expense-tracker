@@ -13,8 +13,6 @@ using SummaryYearSalary.Infrastructure.Data;
 using SummaryYearSalary.Infrastructure.Repositories;
 using SummaryYearSalary.Infrastructure.Services;
 
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -94,15 +92,6 @@ public static class InfrastructureServiceRegistration
             options.Email = emailConfiguration;
         });
 
-        // Register Google Auth settings for DI
-        var googleConfig = configuration.GetSection(GoogleAuthSettings.SectionName).Get<GoogleAuthSettings>() ?? new GoogleAuthSettings();
-        services.Configure<GoogleAuthSettings>(options =>
-        {
-            options.ClientId = googleConfig.ClientId;
-            options.ClientSecret = googleConfig.ClientSecret;
-            options.CallbackUrl = googleConfig.CallbackUrl;
-        });
-
         return emailConfiguration;
     }
 
@@ -128,11 +117,7 @@ public static class InfrastructureServiceRegistration
         }
         services.AddDbContext<SummaryYearSalaryDbContext>(options =>
         {
-            options.UseSqlServer(connectionString,
-                sqlOptions => sqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 3,
-                        maxRetryDelay: TimeSpan.FromSeconds(5),
-                        errorNumbersToAdd: null));
+            options.UseSqlite(connectionString);
 
             if (configuration.GetValue<bool>("IsDevelopment"))
             {
@@ -174,15 +159,9 @@ public static class InfrastructureServiceRegistration
         IConfiguration configuration)
     {
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
-        var googleSettings = configuration.GetSection(GoogleAuthSettings.SectionName).Get<GoogleAuthSettings>();
         var key = Encoding.UTF8.GetBytes(jwtSettings!.Secret);
 
-        var googleClientId = (googleSettings?.ClientId ?? string.Empty)
-            .Replace("{INNO_GOOGLE_CLIENT_ID}", Environment.GetEnvironmentVariable("INNO_GOOGLE_CLIENT_ID") ?? string.Empty, StringComparison.Ordinal);
-        var googleClientSecret = (googleSettings?.ClientSecret ?? string.Empty)
-            .Replace("{INNO_GOOGLE_CLIENT_SECRET}", Environment.GetEnvironmentVariable("INNO_GOOGLE_CLIENT_SECRET") ?? string.Empty, StringComparison.Ordinal);
-
-        var authBuilder = services.AddAuthentication(options =>
+        services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -218,22 +197,6 @@ public static class InfrastructureServiceRegistration
                 }
             };
         });
-
-        // Add Google OAuth only if credentials are configured
-        if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
-        {
-            authBuilder
-                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
-                {
-                    options.ClientId = googleClientId;
-                    options.ClientSecret = googleClientSecret;
-                    options.CallbackPath = "/api/authorize/google/callback-internal";
-                    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    options.Scope.Add("profile");
-                    options.Scope.Add("email");
-                });
-        }
 
         return services;
     }
@@ -337,11 +300,10 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IMemberRepository, MemberRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<ITransactionHistoryRepository, TransactionHistoryRepository>();
         services.AddScoped<IBudgetRepository, BudgetRepository>();
-        services.AddScoped<ITransactionProposalRepository, TransactionProposalRepository>();
-        services.AddScoped<INotificationRepository, NotificationRepository>();
-        services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IExcelExportService, ExcelExportService>();
 
         return services;

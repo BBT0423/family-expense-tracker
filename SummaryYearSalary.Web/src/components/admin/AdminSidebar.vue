@@ -30,7 +30,7 @@
     </div>
 
     <div class="sidebar-content">
-      <nav class="nav-menu">
+      <nav class="nav-menu" data-tour="sidebar-nav">
         <SidebarSection v-for="section in menuSections" :key="section.title" :title="section.title">
           <div
             v-for="item in section.items"
@@ -47,18 +47,12 @@
                 <el-icon size="18"><component :is="item.icon" /></el-icon>
               </template>
               {{ item.label }}
-              <span v-if="item.path === PROPOSALS_PATH && pendingCount > 0" class="nav-count">{{
-                pendingCount
-              }}</span>
             </SidebarNavItem>
           </div>
         </SidebarSection>
       </nav>
     </div>
 
-    <div class="sidebar-user-footer">
-      <SidebarUserMenu />
-    </div>
     <div class="sidebar-version">v{{ appVersion }}</div>
 
     <Teleport to="body">
@@ -74,34 +68,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
+import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useProposalStore } from '@/stores/proposalStore';
 import { APP_VERSION } from '@/constants/version';
 import SidebarLogo from '@/components/admin/SidebarLogo.vue';
 import SidebarSection from '@/components/admin/SidebarSection.vue';
 import SidebarNavItem from '@/components/admin/SidebarNavItem.vue';
-import SidebarUserMenu from '@/components/admin/SidebarUserMenu.vue';
 
 const props = defineProps<{ open: boolean; collapsed?: boolean }>();
 const emit = defineEmits(['toggle-sidebar', 'close-sidebar']);
 
 const route = useRoute();
 const appVersion = APP_VERSION;
-
-const PROPOSALS_PATH = '/pages/proposals';
-const proposalStore = useProposalStore();
-const { incoming } = storeToRefs(proposalStore);
-const pendingCount = computed(() => incoming.value.length);
-onMounted(() => proposalStore.fetchIncoming());
-// Refresh the badge whenever the user navigates (cheap, and keeps it current after accept/reject).
-watch(
-  () => route.path,
-  (path) => {
-    if (path !== PROPOSALS_PATH) proposalStore.fetchIncoming();
-  }
-);
 
 interface MenuItem {
   path: string;
@@ -119,7 +97,6 @@ const menuSections: { title: string; items: MenuItem[] }[] = [
     items: [
       { path: '/pages/transactions', label: 'รายการธุรกรรม', icon: 'List' },
       { path: '/pages/transactions/add', label: 'เพิ่มรายการ', icon: 'Plus' },
-      { path: '/pages/proposals', label: 'รายการรอยืนยัน', icon: 'Bell' },
       { path: '/pages/import', label: 'นำเข้าข้อมูล', icon: 'Upload' },
     ],
   },
@@ -127,7 +104,7 @@ const menuSections: { title: string; items: MenuItem[] }[] = [
     title: 'จัดการ',
     items: [
       { path: '/pages/settings', label: 'ตั้งค่า', icon: 'Setting' },
-      { path: '/pages/users/profile', label: 'โปรไฟล์', icon: 'UserFilled' },
+      { path: '/pages/help', label: 'คู่มือการใช้งาน', icon: 'Reading' },
     ],
   },
 ];

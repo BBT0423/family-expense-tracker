@@ -5,4 +5,4 @@ using MediatR;
 
 namespace SummaryYearSalary.Application.Reports.Queries.GetYearlySummaryQuery;
 
-public record GetYearlySummaryQuery(string UserId, int Year, string? ScopeUserId = null) : IRequest<Result<YearlySummaryResponse>>;
+public record GetYearlySummaryQuery(string UserId, int Year, string? ScopeUserId = null, int? MemberId = null) : IRequest<Result<YearlySummaryResponse>>;

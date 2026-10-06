@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<title>Family Expense Tracker</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;user-select:none}
+  body{font-family:'Segoe UI','Leelawadee UI','Noto Sans Thai',-apple-system,BlinkMacSystemFont,sans-serif;color:#fff}
+
+  body{background:linear-gradient(135deg,#0e7490 0%,#0891b2 100%);display:flex;align-items:center}
+  .grid{width:100%;max-width:1040px;margin:0 auto;padding:0 60px;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+  .eyebrow{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.75);margin:0 0 14px}
+  .title{font-size:52px;line-height:1.05;font-weight:800;letter-spacing:-.02em;margin:0 0 28px}
+  .status{position:relative;height:22px;overflow:hidden;font-size:15px;color:rgba(255,255,255,.9)}
+  .status span{position:absolute;left:0;top:0;opacity:0;animation:msg 3s infinite}
+  .status span:nth-child(2){animation-delay:1s}.status span:nth-child(3){animation-delay:2s}
+  .chart{height:260px;display:flex;align-items:flex-end;gap:18px;padding:0 10px;border-bottom:2px solid rgba(255,255,255,.35)}
+  .chart i{flex:1;height:100%;border-radius:10px 10px 0 0;background:rgba(255,255,255,.9);transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both,wave 2.4s ease-in-out infinite alternate}
+  .chart i:nth-child(1){--a:.45;--b:.8;animation-delay:.05s,.75s}
+  .chart i:nth-child(2){--a:.7;--b:.35;animation-delay:.15s,.85s}
+  .chart i:nth-child(3){--a:.55;--b:.9;animation-delay:.25s,.95s}
+  .chart i:nth-child(4){--a:.85;--b:.5;animation-delay:.35s,1.05s}
+  .chart i:nth-child(5){--a:.62;--b:1;animation-delay:.45s,1.15s}
+  .chart i:nth-child(6){--a:.95;--b:.6;animation-delay:.55s,1.25s}
+  .chart i:nth-child(odd){background:rgba(255,255,255,.45)}
+  @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(var(--a))}}
+  @keyframes wave{0%{transform:scaleY(var(--a))}50%{transform:scaleY(var(--b))}100%{transform:scaleY(calc((var(--a) + var(--b)) / 2))}}
+  @keyframes msg{0%{opacity:0;transform:translateY(8px)}8%,30%{opacity:1;transform:none}38%,100%{opacity:0;transform:translateY(-8px)}}
+
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div>
+      <p class="eyebrow">ยินดีต้อนรับ</p>
+      <h1 class="title">Family<br>Expense Tracker</h1>
+      <div class="status"><span>กำลังเริ่มต้นแอป…</span><span>กำลังเชื่อมต่อฐานข้อมูล…</span><span>เกือบเสร็จแล้ว…</span></div>
+    </div>
+    <div class="chart">
+      <i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+  </div>
+</body>
+</html>

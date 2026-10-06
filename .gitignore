@@ -97,3 +97,14 @@ __pycache__/
 .claude/settings.local.json
 .claude/worktrees/
 .claude/scheduled_tasks.lock
+**/Public/Logs/
+**/Public/uploads/
+
+# ============================================================
+# Windows desktop edition (Electron + SQLite)
+# ============================================================
+SummaryYearSalary.Web/release/
+SummaryYearSalary.Api/wwwroot/
+*.db
+*.db-shm
+*.db-wal

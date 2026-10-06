@@ -1,6 +1,8 @@
 using SummaryYearSalary.Api.Models.Budget;
 using SummaryYearSalary.Application.Categories.Commands.CreateCategoryCommand;
 using SummaryYearSalary.Application.Categories.Commands.UpdateCategoryCommand;
+using SummaryYearSalary.Application.Members.Commands.CreateMemberCommand;
+using SummaryYearSalary.Application.Members.Commands.UpdateMemberCommand;
 using SummaryYearSalary.Application.Transactions.Commands.BulkImportTransactionsCommand;
 using SummaryYearSalary.Application.Transactions.Commands.CreateTransactionCommand;
 using SummaryYearSalary.Application.Transactions.Commands.UpdateTransactionCommand;
@@ -35,5 +37,10 @@ public class BudgetMappingRegister : IRegister
 
         config.NewConfig<BulkImportItemRequest, BulkImportItem>()
             .Map(dest => dest.Type, src => Enum.Parse<TransactionType>(src.Type, true));
+
+        config.NewConfig<CreateMemberRequest, CreateMemberCommand>();
+
+        config.NewConfig<UpdateMemberRequest, UpdateMemberCommand>()
+            .Map(dest => dest.Id, _ => 0);
     }
 }

@@ -10,13 +10,18 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- SQLitePCLRaw.lib.e_sqlite3 2.1.11 (transitive via Microsoft.EntityFrameworkCore.Sqlite 10.0.2)
+         has a known advisory (GHSA-2m69-gcr7-jv3q) with no patched version published yet upstream.
+         Low risk here: this app only ever opens its own locally-created SQLite file. -->
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1903</WarningsNotAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Authors>Innofinite Team</Authors>
-    <Company>Innofinite Co., Ltd.</Company>
-    <Copyright>Copyright © $([System.DateTime]::Now.Year) Innofinite</Copyright>
-    <Product>SummaryYearSalary</Product>
+    <Authors></Authors>
+    <Company></Company>
+    <Copyright>Copyright © $([System.DateTime]::Now.Year)</Copyright>
+    <Product>Family Expense Tracker</Product>
     <Version>1.0.0</Version>
   </PropertyGroup>
 

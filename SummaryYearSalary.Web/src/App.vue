@@ -6,6 +6,7 @@
 import { onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useIdleTimeout } from '@/composables/useIdleTimeout';
+import { pendingWrites } from '@/utils/httpClient';
 import LockScreen from '@/components/LockScreen.vue';
 import {
   STORAGE_TOKEN,
@@ -48,6 +49,20 @@ const handleStorageChange = (event: StorageEvent) => {
   }
 };
 
+// Warn before the window closes while a save/import/etc. write request is
+// still in flight — pendingWrites is a live count maintained by httpClient's
+// interceptors, not a per-feature flag, so this covers every write path
+// (transaction save, import, category/member create) without each one
+// needing to remember to set it. In the packaged Electron app this is what
+// lets main.cjs's will-prevent-unload show a confirmation instead of the
+// window just silently refusing to close or a save getting killed mid-request.
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (pendingWrites.value > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+}
+
 onMounted(async () => {
   // Only fetch permissions if user is authenticated
   if (authStore.isAuthenticated) {
@@ -61,11 +76,13 @@ onMounted(async () => {
 
   // Set up storage event listener for cross-tab synchronization
   globalThis.addEventListener('storage', handleStorageChange);
+  globalThis.addEventListener('beforeunload', handleBeforeUnload);
 });
 
 onUnmounted(() => {
   // Clean up event listener
   globalThis.removeEventListener('storage', handleStorageChange);
+  globalThis.removeEventListener('beforeunload', handleBeforeUnload);
 
   // Clean up idle timeout
   if (idleTimeoutEnabled) {

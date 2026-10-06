@@ -21,27 +21,27 @@ public class ReportsController(ISender mediator, IAppLogger logger) : BaseContro
 
     [HttpGet("summary")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMonthlySummary([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null)
+    public async Task<IActionResult> GetMonthlySummary([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null, [FromQuery] int? memberId = null)
     {
-        var query = new GetMonthlySummaryQuery(GetCurrentUserId(), month, year, userId);
+        var query = new GetMonthlySummaryQuery(GetCurrentUserId(), month, year, userId, memberId);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Summary Failed");
     }
 
     [HttpGet("yearly")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetYearlySummary([FromQuery] int year, [FromQuery] string? userId = null)
+    public async Task<IActionResult> GetYearlySummary([FromQuery] int year, [FromQuery] string? userId = null, [FromQuery] int? memberId = null)
     {
-        var query = new GetYearlySummaryQuery(GetCurrentUserId(), year, userId);
+        var query = new GetYearlySummaryQuery(GetCurrentUserId(), year, userId, memberId);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Yearly Summary Failed");
     }
 
     [HttpGet("by-category")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetCategorySummary([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null)
+    public async Task<IActionResult> GetCategorySummary([FromQuery] int month, [FromQuery] int year, [FromQuery] string? userId = null, [FromQuery] int? memberId = null)
     {
-        var query = new GetCategorySummaryQuery(GetCurrentUserId(), month, year, userId);
+        var query = new GetCategorySummaryQuery(GetCurrentUserId(), month, year, userId, memberId);
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Category Summary Failed");
     }

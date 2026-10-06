@@ -3,6 +3,7 @@ import type {
   LoginRequest,
   LoginResponse,
   RefreshTokenRequest,
+  RegisterRequest,
   VerifyMfaRequest,
   VerifyMfaResponse,
 } from '@/types/authorize';
@@ -15,6 +16,14 @@ export const authService = {
    */
   async login(payload: LoginRequest) {
     return httpClient.post<Result<LoginResponse>>('/api/authorize/login', payload);
+  },
+
+  /**
+   * POST /api/authorize/register
+   * Create a new account and return JWT tokens
+   */
+  async register(payload: RegisterRequest) {
+    return httpClient.post<Result<LoginResponse>>('/api/authorize/register', payload);
   },
 
   /**

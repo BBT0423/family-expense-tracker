@@ -12,4 +12,7 @@ public record TransactionResponse(
     DateTime TransactionDate,
     DateTime CreatedAt,
     string? CreatedByName = null,
-    string? OwnerName = null);
+    string? OwnerName = null,
+    int? MemberId = null,
+    string? MemberName = null,
+    string? MemberColor = null);

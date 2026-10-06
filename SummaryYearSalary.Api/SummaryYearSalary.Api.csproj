@@ -1,4 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<!-- QuestPDF's native Skia dependency lookup crashes at startup
+		     ("The path is empty") under PublishSingleFile unless native
+		     libraries are extracted to disk instead of staying bundled. -->
+		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\SummaryYearSalary.Application\SummaryYearSalary.Application.csproj" />
 		<ProjectReference Include="..\SummaryYearSalary.Infrastructure\SummaryYearSalary.Infrastructure.csproj" />
@@ -10,5 +16,9 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" />
 		<PackageReference Include="Mapster" />
 		<PackageReference Include="Mapster.DependencyInjection" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Fonts\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="Templates\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
 	</ItemGroup>
 </Project>

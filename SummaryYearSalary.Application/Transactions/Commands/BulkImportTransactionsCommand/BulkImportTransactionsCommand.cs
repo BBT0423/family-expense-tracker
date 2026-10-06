@@ -7,6 +7,7 @@ namespace SummaryYearSalary.Application.Transactions.Commands.BulkImportTransact
 
 public record BulkImportItem(
     int CategoryId,
+    int? MemberId,
     TransactionType Type,
     decimal Amount,
     string? Note,

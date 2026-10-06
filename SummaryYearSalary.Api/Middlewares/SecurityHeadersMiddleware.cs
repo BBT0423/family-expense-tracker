@@ -27,17 +27,23 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
 
         // Content-Security-Policy: Prevent XSS and data injection
-        // Restrictive policy without unsafe directives
+        // style-src allows 'unsafe-inline' because Element Plus (the UI library)
+        // applies inline styles at runtime for dynamic positioning/theming —
+        // there's no practical way to nonce/hash those. font-src allows data:
+        // for the icon font Element Plus embeds as a data: URI. script-src stays
+        // 'self' only, so this doesn't open up script injection.
+#pragma warning disable S7039 // unsafe-inline is required for style-src only, not script-src — see comment above
         context.Response.Headers.Append("Content-Security-Policy",
             "default-src 'self'; " +
             "script-src 'self'; " +
-            "style-src 'self'; " +
+            "style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' data:; " +
-            "font-src 'self'; " +
+            "font-src 'self' data:; " +
             "connect-src 'self'; " +
             "frame-ancestors 'none'; " +
             "object-src 'none'; " +
             "base-uri 'self'");
+#pragma warning restore S7039
 
         // Referrer-Policy: Control referrer information
         context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");

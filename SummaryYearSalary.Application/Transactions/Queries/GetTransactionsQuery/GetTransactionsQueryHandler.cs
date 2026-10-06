@@ -22,7 +22,7 @@ public class GetTransactionsQueryHandler(
         var paged = await ReportScope.ResolvePagedAsync(
             _transactionRepository, request.UserId, request.ScopeUserId,
             request.Month, request.Year, request.Type, request.CategoryId,
-            request.SearchTerm, request.PageNumber, request.PageSize);
+            request.SearchTerm, request.PageNumber, request.PageSize, request.MemberId);
 
         var combined = ReportScope.IsCombined(request.UserId, request.ScopeUserId);
 
@@ -49,7 +49,8 @@ public class GetTransactionsQueryHandler(
                 t.Id,
                 t.CategoryId, t.Category.Name, t.Category.Icon, t.Category.Color,
                 t.Type.ToString(), t.Amount, t.Note,
-                t.TransactionDate, t.CreatedAt, createdByName, ownerName));
+                t.TransactionDate, t.CreatedAt, createdByName, ownerName,
+                t.MemberId, t.Member?.Name, t.Member?.Color));
         }
 
         var result = new PaginatedList<TransactionResponse>(

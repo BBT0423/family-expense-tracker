@@ -12,6 +12,7 @@ public record UpdateTransactionCommand(
     int Id,
     string UserId,
     int CategoryId,
+    int? MemberId,
     TransactionType Type,
     decimal Amount,
     string? Note,
@@ -22,6 +23,7 @@ public class UpdateTransactionCommandValidator : AbstractValidator<UpdateTransac
     public UpdateTransactionCommandValidator()
     {
         RuleFor(x => x.CategoryId).GreaterThan(0).WithMessage("กรุณาเลือกหมวดหมู่");
+        RuleFor(x => x.MemberId).NotNull().GreaterThan(0).WithMessage("กรุณาเลือกสมาชิก");
         RuleFor(x => x.Amount).GreaterThan(0).WithMessage("จำนวนเงินต้องมากกว่า 0");
         RuleFor(x => x.TransactionDate).NotEmpty().WithMessage("วันที่จำเป็นต้องระบุ");
         RuleFor(x => x.Note)

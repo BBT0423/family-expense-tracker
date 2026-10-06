@@ -14,32 +14,32 @@ public static class ReportScope
     public const string All = "all";
 
     public static Task<IEnumerable<Transaction>> ResolveMonthYearAsync(
-        ITransactionRepository repository, string requesterUserId, string? scopeUserId, int month, int year) =>
+        ITransactionRepository repository, string requesterUserId, string? scopeUserId, int month, int year, int? memberId = null) =>
         scopeUserId switch
         {
-            All => repository.GetAllUsersMonthYearAsync(month, year),
-            null or "" => repository.GetByUserMonthYearAsync(requesterUserId, month, year),
-            _ => repository.GetByUserMonthYearAsync(scopeUserId, month, year)
+            All => repository.GetAllUsersMonthYearAsync(month, year, memberId),
+            null or "" => repository.GetByUserMonthYearAsync(requesterUserId, month, year, memberId),
+            _ => repository.GetByUserMonthYearAsync(scopeUserId, month, year, memberId)
         };
 
     public static Task<IEnumerable<Transaction>> ResolveYearAsync(
-        ITransactionRepository repository, string requesterUserId, string? scopeUserId, int year) =>
+        ITransactionRepository repository, string requesterUserId, string? scopeUserId, int year, int? memberId = null) =>
         scopeUserId switch
         {
-            All => repository.GetAllUsersYearAsync(year),
-            null or "" => repository.GetByUserYearAsync(requesterUserId, year),
-            _ => repository.GetByUserYearAsync(scopeUserId, year)
+            All => repository.GetAllUsersYearAsync(year, memberId),
+            null or "" => repository.GetByUserYearAsync(requesterUserId, year, memberId),
+            _ => repository.GetByUserYearAsync(scopeUserId, year, memberId)
         };
 
     public static Task<PaginatedList<Transaction>> ResolvePagedAsync(
         ITransactionRepository repository, string requesterUserId, string? scopeUserId,
         int month, int year, TransactionType? type, int? categoryId,
-        string? searchTerm, int pageNumber, int pageSize) =>
+        string? searchTerm, int pageNumber, int pageSize, int? memberId = null) =>
         scopeUserId switch
         {
-            All => repository.GetAllUsersPagedAsync(month, year, type, categoryId, searchTerm, pageNumber, pageSize),
-            null or "" => repository.GetPagedByUserAsync(requesterUserId, month, year, type, categoryId, searchTerm, pageNumber, pageSize),
-            _ => repository.GetPagedByUserAsync(scopeUserId, month, year, type, categoryId, searchTerm, pageNumber, pageSize)
+            All => repository.GetAllUsersPagedAsync(month, year, type, categoryId, searchTerm, pageNumber, pageSize, memberId),
+            null or "" => repository.GetPagedByUserAsync(requesterUserId, month, year, type, categoryId, searchTerm, pageNumber, pageSize, memberId),
+            _ => repository.GetPagedByUserAsync(scopeUserId, month, year, type, categoryId, searchTerm, pageNumber, pageSize, memberId)
         };
 
     /// <summary>True once the results can include rows from more than one ApplicationUser — the

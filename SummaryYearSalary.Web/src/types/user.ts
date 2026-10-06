@@ -32,17 +32,10 @@ interface UpdateUserRequest {
   lastName: string;
 }
 
-interface UserDirectoryEntry {
-  id: string;
-  displayName: string;
-  email: string;
-}
-
 export type {
   UpdateProfileRequest,
   EnableMfaResponse,
   UserProfile,
   CreateUserRequest,
   UpdateUserRequest,
-  UserDirectoryEntry,
 };

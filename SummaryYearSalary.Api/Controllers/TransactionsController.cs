@@ -4,6 +4,7 @@ using SummaryYearSalary.Application.Transactions.Commands.BulkImportTransactions
 using SummaryYearSalary.Application.Transactions.Commands.CreateTransactionCommand;
 using SummaryYearSalary.Application.Transactions.Commands.DeleteTransactionCommand;
 using SummaryYearSalary.Application.Transactions.Commands.UpdateTransactionCommand;
+using SummaryYearSalary.Application.Transactions.Queries.GetTransactionHistoryQuery;
 using SummaryYearSalary.Application.Transactions.Queries.GetTransactionsQuery;
 using SummaryYearSalary.Domain.Enums;
 
@@ -39,7 +40,7 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
             userId, request.Month ?? 0, request.Year ?? 0,
             transactionType, request.CategoryId,
             request.SearchTerm, request.PageNumber ?? 1, request.PageSize ?? 20,
-            request.UserId);
+            request.UserId, request.MemberId);
 
         var result = await _mediator.Send(query);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Transactions Failed");
@@ -84,6 +85,18 @@ public class TransactionsController(ISender mediator, IMapper mapper, IAppLogger
         var command = new DeleteTransactionCommand(id, userId);
         var result = await _mediator.Send(command);
         return result.IsSuccess ? Ok(result) : ToProblem(result, "Delete Transaction Failed");
+    }
+
+    [HttpGet("{id:int}/history")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetHistory(int id)
+    {
+        var userId = GetCurrentUserId();
+
+        var query = new GetTransactionHistoryQuery(id, userId);
+        var result = await _mediator.Send(query);
+        return result.IsSuccess ? Ok(result) : ToProblem(result, "Get Transaction History Failed");
     }
 
     [HttpPost("bulk-import")]

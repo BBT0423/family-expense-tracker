@@ -56,10 +56,35 @@ import { getGreeting } from '@/utils/utilities';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AppProgress from '@/components/AppProgress.vue';
+import { authService } from '@/services/authService';
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const moved = ref(false);
 const loadPct = ref(0);
+
+// Single shared account for this whole household device — no login screen,
+// no PIN, nothing for the user to type. The API already seeds this account
+// on every boot (Program.cs's SeedAdminUserAsync), so this is always valid.
+const DEVICE_EMAIL = 'pongpan22120@gmail.com';
+const DEVICE_PASSWORD = 'Admin@123456';
+
+async function silentLogin(retriesLeft = 10): Promise<void> {
+  try {
+    const { data } = await authService.login({ email: DEVICE_EMAIL, password: DEVICE_PASSWORD });
+    if (data?.isSuccess && data.value) {
+      authStore.setAuth({ ...data.value, user: { ...data.value.user, loginProvider: 'email' } });
+      return;
+    }
+  } catch {
+    // API may still be finishing its own boot (DB migrate/seed) — retry.
+  }
+  if (retriesLeft > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await silentLogin(retriesLeft - 1);
+  }
+}
 
 let animationTimeout: ReturnType<typeof setTimeout> | null = null;
 let redirectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -80,21 +105,21 @@ function startProgress() {
 }
 
 onMounted(async () => {
-  try {
-    animationTimeout = setTimeout(() => {
-      moved.value = true;
-      startProgress();
-    }, 500);
+  animationTimeout = setTimeout(() => {
+    moved.value = true;
+    startProgress();
+  }, 500);
 
-    redirectTimeout = setTimeout(() => {
-      router.replace('/pages');
-    }, 1500);
-  } catch (error) {
-    console.error('❌ Error initializing welcome page:', error);
-    redirectTimeout = setTimeout(() => {
-      router.replace('/pages');
-    }, 1500);
-  }
+  const minDisplayTime = new Promise<void>((resolve) => {
+    redirectTimeout = setTimeout(resolve, 1500);
+  });
+
+  // Wait for both the intro animation's minimum display time AND a valid
+  // session — whichever takes longer — so we never navigate to /pages
+  // before we're actually authenticated (the route guard would just bounce
+  // us straight back here).
+  await Promise.all([silentLogin(), minDisplayTime]);
+  router.replace('/pages');
 });
 
 onUnmounted(() => {

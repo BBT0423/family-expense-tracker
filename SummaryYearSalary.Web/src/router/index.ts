@@ -26,7 +26,7 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/authorize/login',
+    redirect: '/authorize/welcome',
   },
   {
     path: '/denied',
